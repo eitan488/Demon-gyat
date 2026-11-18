@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "com.demon.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"CameraMixin",
+		"EntityMixin",
+		"GameRendererAccessor",
+		"GameRendererMixin",
+		"KeyboardHandlerMixin",
+		"KeyboardInputMixin",
+		"LevelRendererMixin",
+		"MinecraftMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

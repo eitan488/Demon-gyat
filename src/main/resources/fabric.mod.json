@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "demon",
+	"version": "${version}",
+	"name": "Demon Client",
+	"description": "Modern base hunting utility: Chunk Finder, ESP and Freecam with an animated custom GUI and main menu.",
+	"authors": ["Demon"],
+	"license": "MIT",
+	"icon": "assets/demon/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.demon.client.DemonClient"]
+	},
+	"mixins": ["demon.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.17.0",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
