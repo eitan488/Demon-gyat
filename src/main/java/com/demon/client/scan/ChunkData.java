@@ -30,8 +30,12 @@ public final class ChunkData {
 		this.z = z;
 	}
 
+	/** 0 = unknown, 1 = generated before 1.17 (no copper ore), 2 = newer terrain. Overworld only. */
+	public byte oldGen;
+
 	void add(int bx, int by, int bz, Target t) {
 		blockCounts[t.ordinal()]++;
+		if (t.group == Target.Group.BUILD) return; // counted only, positions not needed
 		if (by < minY) minY = by;
 		if (by > maxY) maxY = by;
 		if (size >= MAX_HITS) return;
@@ -62,8 +66,13 @@ public final class ChunkData {
 
 	public int total() {
 		int n = 0;
-		for (Target t : Target.VALUES) if (t.group != Target.Group.TRAIL) n += count(t);
+		for (Target t : Target.VALUES) if (t.group != Target.Group.TRAIL && t.group != Target.Group.BUILD) n += count(t);
 		return n;
+	}
+
+	/** Weighted amount of unnatural building blocks. */
+	public double buildScore() {
+		return count(Target.CONCRETE) + count(Target.GLASS) + count(Target.WOOL) * 0.5 + count(Target.QUARTZ) + count(Target.VALUABLE) * 12;
 	}
 
 	public int trailCount() {
@@ -87,7 +96,7 @@ public final class ChunkData {
 	/** Targets present in this chunk, most numerous first. */
 	public List<Target> sortedTargets() {
 		List<Target> list = new ArrayList<>();
-		for (Target t : Target.VALUES) if (count(t) > 0 && t.group != Target.Group.TRAIL) list.add(t);
+		for (Target t : Target.VALUES) if (count(t) > 0 && t.group != Target.Group.TRAIL && t.group != Target.Group.BUILD) list.add(t);
 		list.sort((a, b) -> Integer.compare(count(b), count(a)));
 		return list;
 	}
@@ -110,6 +119,7 @@ public final class ChunkData {
 		if (old == null) return;
 		firstSeen = old.firstSeen;
 		announced = old.announced;
+		if (oldGen == 0) oldGen = old.oldGen;
 		appear.snap(old.appear.peek());
 		System.arraycopy(old.entityCounts, 0, entityCounts, 0, entityCounts.length);
 	}

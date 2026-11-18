@@ -74,6 +74,25 @@ public final class Waypoints {
 		return out;
 	}
 
+	/**
+	 * Waypoints from the linked dimension converted through the nether ratio (8:1), so overworld
+	 * bases show up at the right nether coordinates and vice versa. Returned copies are not saved.
+	 */
+	public static List<Waypoint> linked() {
+		String d = dimension();
+		boolean nether = d.equals("minecraft:the_nether"), over = d.equals("minecraft:overworld");
+		List<Waypoint> out = new ArrayList<>();
+		if (!nether && !over) return out;
+		String other = nether ? "minecraft:overworld" : "minecraft:the_nether";
+		for (Waypoint w : all()) {
+			if (!other.equals(w.dim)) continue;
+			int x = nether ? Math.floorDiv(w.x, 8) : w.x * 8, z = nether ? Math.floorDiv(w.z, 8) : w.z * 8;
+			Waypoint c = new Waypoint(w.name + (nether ? " (OW)" : " (Nether)"), x, nether ? 120 : 64, z, d, w.color, "linked");
+			out.add(c);
+		}
+		return out;
+	}
+
 	private static void load(String k) {
 		loadedKey = k;
 		LIST.clear();

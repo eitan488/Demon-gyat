@@ -29,7 +29,14 @@ import com.demon.client.module.modules.hud.RadarModule;
 import com.demon.client.module.modules.hud.ServerInfoModule;
 import com.demon.client.module.modules.hud.SpeedModule;
 import com.demon.client.module.modules.hud.TpsModule;
+import com.demon.client.module.modules.hunting.AutoScreenshotModule;
+import com.demon.client.module.modules.hunting.BuildFinderModule;
 import com.demon.client.module.modules.hunting.ChunkBordersModule;
+import com.demon.client.module.modules.hunting.FindsModule;
+import com.demon.client.module.modules.hunting.HeatmapModule;
+import com.demon.client.module.modules.hunting.MobFinderModule;
+import com.demon.client.module.modules.hunting.NavigatorModule;
+import com.demon.client.module.modules.hunting.OldChunksModule;
 import com.demon.client.module.modules.hunting.ItemFramesModule;
 import com.demon.client.module.modules.hunting.LogoutSpotsModule;
 import com.demon.client.module.modules.hunting.NewChunksModule;
@@ -83,6 +90,10 @@ public final class ModuleManager {
 	public static SpawnerFinderModule spawnerFinder;
 	public static SignReaderModule signReader;
 	public static TrailFinderModule trailFinder;
+	public static OldChunksModule oldChunks;
+	public static BuildFinderModule buildFinder;
+	public static HeatmapModule heatmap;
+	public static AutoScreenshotModule autoScreenshot;
 	public static CrosshairModule crosshair;
 	public static ZoomModule zoom;
 	public static NoRenderModule noRender;
@@ -102,6 +113,13 @@ public final class ModuleManager {
 		// hunting
 		chunkFinder = reg(new ChunkFinderModule());
 		autoRtp = reg(new AutoRtpModule());
+		reg(new FindsModule());
+		reg(new NavigatorModule());
+		oldChunks = reg(new OldChunksModule());
+		buildFinder = reg(new BuildFinderModule());
+		reg(new MobFinderModule());
+		heatmap = reg(new HeatmapModule());
+		autoScreenshot = reg(new AutoScreenshotModule());
 		newChunks = reg(new NewChunksModule());
 		waypoints = reg(new WaypointsModule());
 		portalFinder = reg(new PortalFinderModule());
@@ -194,7 +212,8 @@ public final class ModuleManager {
 
 	/** Extra modules that need the chunk scanner running. */
 	public static boolean scanNeeded() {
-		return portalFinder != null && (portalFinder.isEnabled() || spawnerFinder.isEnabled() || signReader.isEnabled() || trailFinder.isEnabled());
+		return portalFinder != null && (portalFinder.isEnabled() || spawnerFinder.isEnabled() || signReader.isEnabled() || trailFinder.isEnabled()
+			|| oldChunks.isEnabled() || buildFinder.isEnabled() || heatmap.isEnabled());
 	}
 
 	public static void tick() {

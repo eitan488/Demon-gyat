@@ -17,14 +17,14 @@ A modern base-hunting utility mod for **Minecraft 1.21.11 (Fabric)**.
 
 1. Install **Fabric Loader** for Minecraft **1.21.11** (https://fabricmc.net/use/installer/).
 2. Download **Fabric API** for 1.21.11 (for example `0.141.6+1.21.11`) and put it in your `mods` folder.
-3. Put `demon-client-1.2.0.jar` in the same `mods` folder.
+3. Put `demon-client-1.3.0.jar` in the same `mods` folder.
 4. Start the game with the Fabric profile.
 
-## All 62 modules
+## All 69 modules
 
 | Category | Modules |
 | --- | --- |
-| **Hunting** | Chunk Finder, Auto RTP, New Chunks, Waypoints, Portal Finder, Spawner Finder, Sign Reader, Item Frames, Trail Finder, Logout Spots, Visual Range, Chunk Borders |
+| **Hunting** | Chunk Finder, Auto RTP, Finds (browser), Navigator, Old Chunks, Build Finder, Mob Finder, Activity Heatmap, Auto Screenshot, New Chunks, Waypoints, Portal Finder, Spawner Finder, Sign Reader, Item Frames, Trail Finder, Logout Spots, Visual Range, Chunk Borders |
 | **PvP (visuals)** | Target HUD, Damage Numbers, Kill Effects, Crosshair, Hit Sounds, Health Bars, Low Health, Armor Alert, Totem Pops, Combat Stats |
 | **Render** | ESP, Freecam, Nametags, Fullbright, Zoom, No Render, Block Highlight, Breadcrumbs, Time Changer, View Model, Trails |
 | **Movement** | Sprint, Auto Walk, Yaw Lock, Elytra Boost, Safe Walk, Parkour, Anti AFK |
@@ -43,6 +43,15 @@ Highlights:
   - Visual Range alerts when players come into or leave render distance.
   - Radar and Compass Bar show finds and waypoints around you.
   - Hunt Stats tracks the session: time, chunks scanned, finds and distance travelled.
+- **Base hunting tools (v1.3)**:
+  - **Old Chunks** marks overworld terrain generated before 1.17. Stone between y 0 and 96 with no copper ore means old terrain, and old terrain is where old bases are.
+  - **Build Finder** finds builds made of concrete, glass, wool, quartz, and diamond/emerald/netherite blocks.
+  - **Mob Finder** highlights tamed pets and horses, name-tagged and leashed mobs, villager trading halls and iron-golem farms.
+  - **Activity Heatmap** colours every chunk from blue to red by how much player activity it shows.
+  - **Finds** (press J, or click it in the menu) opens a browser of every find on the server, saved per server. You can filter, sort by distance or age, see direction arrows, and add a waypoint, copy coordinates or delete each entry.
+  - **Navigator** shows an arrow, distance and ETA to your nearest or latest find or waypoint, plus a guide line on the ground.
+  - **Auto Screenshot** captures every find.
+  - **Waypoints: Portal Linking** shows overworld waypoints in the nether at x/8 (and nether waypoints in the overworld at x8).
 - **PvP visuals** (cosmetic and informational only, no automation):
   - Animated Target HUD with the opponent's face, a health bar with a delayed damage trail, armor, and WINNING/LOSING.
   - Floating damage numbers, health bars above entities, and an HD crosshair with hit markers and an attack-charge bar.
@@ -57,6 +66,7 @@ Highlights:
 | **Right Shift** | Open / close the Demon menu (also: *✦ Demon* button in the pause menu) |
 | **V** | Toggle Freecam |
 | **B** | Add a waypoint where you stand |
+| **J** | Open the Finds browser |
 | **Z** (hold) | Zoom |
 | **N** | Copy your coordinates |
 | Freecam: **W A S D** | Fly where you look |

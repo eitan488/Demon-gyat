@@ -52,6 +52,8 @@ public class PortalFinderModule extends Module {
 			portals.add(box);
 			if (announced.add(ChunkPos.asLong(d.x, d.z)) && notify.on()) {
 				Notifications.push("Portal found", (int) box.getCenter().x + ", " + (int) box.getCenter().z, COLOR, 3f);
+				com.demon.client.util.Finds.add("PORTAL", COLOR, (int) box.getCenter().x, (int) box.minY, (int) box.getCenter().z, d.count(Target.PORTAL), "Lit nether portal");
+				if (com.demon.client.module.ModuleManager.autoScreenshot != null) com.demon.client.module.ModuleManager.autoScreenshot.request();
 			}
 		}
 	}

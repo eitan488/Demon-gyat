@@ -388,6 +388,7 @@ public class ClickGuiScreen extends Screen {
 			regions.add(new Region(x, y, w, CARD_H, (b, mxx, myy) -> {
 				if (b == 0) {
 					if (m.toggleable()) toggle(m);
+					else if (m.hasAction()) m.action();
 					else expand(m);
 				} else if (b == 1) expand(m);
 				else if (b == 2) startBinding(m);

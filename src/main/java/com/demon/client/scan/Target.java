@@ -59,10 +59,16 @@ public enum Target {
 	TORCH("Torch", 0xFFFFD27A, Group.TRAIL, 0, 0),
 	LANTERN("Lantern", 0xFFFFC14D, Group.TRAIL, 0, 0),
 	CRAFTING_TABLE("Crafting Table", 0xFFC8955C, Group.TRAIL, 0, 0),
-	OBSIDIAN("Obsidian", 0xFF6D5BD0, Group.TRAIL, 0, 0);
+	OBSIDIAN("Obsidian", 0xFF6D5BD0, Group.TRAIL, 0, 0),
+	// ---- builds (unnatural blocks; counted only, used by Build Finder / Heatmap)
+	CONCRETE("Concrete", 0xFF60A5FA, Group.BUILD, 0, 0),
+	GLASS("Glass", 0xFFA5F3FC, Group.BUILD, 0, 0),
+	WOOL("Wool", 0xFFF5F5F4, Group.BUILD, 0, 0),
+	QUARTZ("Quartz Blocks", 0xFFE7E5E4, Group.BUILD, 0, 0),
+	VALUABLE("Diamond/Emerald/Netherite Block", 0xFF2DD4BF, Group.BUILD, 0, 0);
 
 	public enum Group {
-		STORAGE("Storage"), REDSTONE("Redstone"), BASE("Base Blocks"), ENTITY("Entities"), TRAIL("Trail Blocks");
+		STORAGE("Storage"), REDSTONE("Redstone"), BASE("Base Blocks"), ENTITY("Entities"), TRAIL("Trail Blocks"), BUILD("Build Blocks");
 
 		public final String title;
 
@@ -139,6 +145,13 @@ public enum Target {
 		if (b == Blocks.LANTERN || b == Blocks.SOUL_LANTERN) return LANTERN;
 		if (b == Blocks.CRAFTING_TABLE) return CRAFTING_TABLE;
 		if (b == Blocks.OBSIDIAN || b == Blocks.CRYING_OBSIDIAN) return OBSIDIAN;
+		if (b == Blocks.DIAMOND_BLOCK || b == Blocks.EMERALD_BLOCK || b == Blocks.NETHERITE_BLOCK) return VALUABLE;
+		String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
+		if (path.endsWith("_concrete") || path.endsWith("_concrete_powder")) return CONCRETE;
+		if (path.equals("glass") || path.equals("tinted_glass") || path.endsWith("_stained_glass")) return GLASS;
+		if (path.endsWith("_wool")) return WOOL;
+		if (path.equals("quartz_block") || path.equals("quartz_pillar") || path.equals("quartz_bricks") || path.equals("chiseled_quartz_block")
+			|| path.equals("smooth_quartz") || path.startsWith("quartz_") && !path.contains("ore")) return QUARTZ;
 		return null;
 	}
 

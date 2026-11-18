@@ -57,6 +57,13 @@ public abstract class Module {
 		return true;
 	}
 
+	/** Action modules run something when clicked in the menu instead of toggling. */
+	public boolean hasAction() {
+		return false;
+	}
+
+	public void action() {}
+
 	/** Modules that are always active (e.g. Interface) return false. */
 	public boolean toggleable() {
 		return true;

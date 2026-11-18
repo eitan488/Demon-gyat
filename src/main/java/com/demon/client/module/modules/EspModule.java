@@ -85,6 +85,7 @@ public class EspModule extends Module {
 			case BASE -> baseBlocks.on();
 			case ENTITY -> entities.on();
 			case TRAIL -> trails.on();
+			case BUILD -> false;
 		};
 	}
 

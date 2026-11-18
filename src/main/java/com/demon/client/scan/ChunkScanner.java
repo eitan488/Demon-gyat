@@ -151,11 +151,19 @@ public final class ChunkScanner {
 		int baseX = pos.getMinBlockX(), baseZ = pos.getMinBlockZ();
 		LevelChunkSection[] sections = chunk.getSections();
 		int minSection = chunk.getMinSectionY();
+		boolean overworld = chunk.getLevel().dimension() == net.minecraft.world.level.Level.OVERWORLD;
+		boolean copper = false;
+		int stoneSections = 0;
 		for (int i = 0; i < sections.length; i++) {
 			LevelChunkSection section = sections[i];
 			if (section == null || section.hasOnlyAir()) continue;
-			if (!section.maybeHas(s -> Target.of(s) != null)) continue;
 			int baseY = (minSection + i) << 4;
+			// copper ore exists since 1.17: old (pre-1.17) terrain between y 0 and 96 has none
+			if (overworld && baseY >= 0 && baseY < 96) {
+				if (section.maybeHas(s -> s.is(net.minecraft.world.level.block.Blocks.COPPER_ORE) || s.is(net.minecraft.world.level.block.Blocks.DEEPSLATE_COPPER_ORE))) copper = true;
+				else if (section.maybeHas(s -> s.is(net.minecraft.world.level.block.Blocks.STONE))) stoneSections++;
+			}
+			if (!section.maybeHas(s -> Target.of(s) != null)) continue;
 			for (int y = 0; y < 16; y++) {
 				for (int z = 0; z < 16; z++) {
 					for (int x = 0; x < 16; x++) {
@@ -168,6 +176,7 @@ public final class ChunkScanner {
 				}
 			}
 		}
+		if (overworld) data.oldGen = copper ? (byte) 2 : stoneSections >= 3 ? (byte) 1 : (byte) 0;
 		ChunkData old = DATA.get(key);
 		data.inherit(old);
 		data.recompute();

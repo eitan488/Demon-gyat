@@ -22,6 +22,7 @@ public class WaypointsModule extends Module {
 	public final BoolSetting labels = add(new BoolSetting("Labels", "Name and distance labels", true));
 	public final BoolSetting autoFinds = add(new BoolSetting("Auto From Finds", "Add a waypoint for every Chunk Finder find", true));
 	public final BoolSetting deaths = add(new BoolSetting("Death Points", "Add a waypoint where you die", true));
+	public final BoolSetting portalLink = add(new BoolSetting("Portal Linking", "Show overworld waypoints in the nether at x/8 (and nether ones in the overworld at x8)", true));
 	public final NumberSetting maxDistance = add(new NumberSetting("Max Distance", "Hide waypoints further than this (0 = never)", 0, 0, 20000, 500, "m"));
 
 	private int counter;
@@ -51,10 +52,16 @@ public class WaypointsModule extends Module {
 		return dx * dx + dz * dz < maxDistance.get() * maxDistance.get();
 	}
 
+	private java.util.List<Waypoints.Waypoint> shown() {
+		java.util.List<Waypoints.Waypoint> list = new java.util.ArrayList<>(Waypoints.here());
+		if (portalLink.on()) list.addAll(Waypoints.linked());
+		return list;
+	}
+
 	@Override
 	public void onRender3D(Render3D r) {
 		if (!beams.on() || mc.player == null) return;
-		for (Waypoints.Waypoint w : Waypoints.here()) {
+		for (Waypoints.Waypoint w : shown()) {
 			if (!visible(w)) continue;
 			double x = w.x + 0.5, z = w.z + 0.5;
 			r.line(x, w.y, z, x, w.y + 200, z, Theme.withAlpha(w.color, 220), Theme.withAlpha(w.color, 0), 3.5f);
@@ -66,7 +73,7 @@ public class WaypointsModule extends Module {
 	public void onRenderOverlay(GuiGraphics g, DeltaTracker delta) {
 		if (!labels.on() || mc.player == null) return;
 		Vec3 cam = Render3D.cameraPos();
-		for (Waypoints.Waypoint w : Waypoints.here()) {
+		for (Waypoints.Waypoint w : shown()) {
 			if (!visible(w)) continue;
 			Vec3 p = new Vec3(w.x + 0.5, w.y + 2.2, w.z + 0.5);
 			double d = p.distanceTo(cam);

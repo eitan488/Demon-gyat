@@ -197,6 +197,8 @@ public class ChunkFinderModule extends Module {
 		}
 		if (saveLog.on()) writeLog(d, kind, summary.toString());
 		if (ModuleManager.autoRtp != null) ModuleManager.autoRtp.onFind(d, kind, summary.toString());
+		com.demon.client.util.Finds.add(kind.title, kind.color, bx, Math.max(d.maxY, 0), bz, (int) score(d), summary.toString());
+		if (ModuleManager.autoScreenshot != null) ModuleManager.autoScreenshot.request();
 		if (ModuleManager.waypoints.isEnabled() && ModuleManager.waypoints.autoFinds.on()) {
 			com.demon.client.util.Waypoints.add(kind.title + " " + (int) score(d) + "pts", bx, Math.max(d.maxY, 0), bz, kind.color, "find" + d.x + "," + d.z);
 		}
