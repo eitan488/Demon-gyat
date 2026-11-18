@@ -190,10 +190,8 @@ public class AutoRtpModule extends Module {
 		if (!panel.on() || mc.player == null) return;
 		int sw = g.guiWidth();
 		float w = 122, h = 37;
-		float x = sw - w - 5;
-		float y = ModuleManager.chunkFinder.isEnabled() && ModuleManager.chunkFinder.hudList.on()
-			? ModuleManager.chunkFinder.listBottom + 3
-			: (ModuleManager.hud.isEnabled() ? ModuleManager.hud.listBottom + 3 : 5);
+		float[] pos = com.demon.client.hud.HudLayout.place(com.demon.client.hud.HudLayout.Anchor.TOP_RIGHT, w, h);
+		float x = pos[0], y = pos[1];
 		Ui.hud(g, x, y, w, h, 1f);
 		// countdown ring
 		float total = Math.max(1f, delay.asFloat());

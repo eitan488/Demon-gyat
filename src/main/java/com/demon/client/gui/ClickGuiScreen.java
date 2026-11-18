@@ -191,11 +191,12 @@ public class ClickGuiScreen extends Screen {
 		Render2D.text(g, HdFont.MEDIUM, "v" + DemonClient.VERSION + "  ·  1.21.11", px + 34, py + 23.5f, 5.2f, Theme.alpha(Theme.MUTED, open));
 
 		Category[] cats = Category.values();
-		float tabX = px + 8, tabW = SIDEBAR - 16, tabH = 22, top = py + 52;
+		float tabX = px + 8, tabW = SIDEBAR - 16, top = py + 50;
+		float tabH = Math.min(20, (ph - 50 - 42) / Category.values().length - 2);
 		Ui.label(g, "MODULES", tabX + 3, top - 10, open);
 		int selIndex = searchActive() ? -1 : selected.ordinal();
 		if (selIndex >= 0) {
-			float target = top + selIndex * (tabH + 3);
+			float target = top + selIndex * (tabH + 2);
 			if (tabY.peek() < 0) tabY.snap(target);
 			float ty = tabY.target(target).get();
 			Render2D.roundGradient(g, tabX, ty, tabW, tabH, 6, Theme.alpha(Theme.accent1(), 0.32f * open), Theme.alpha(Theme.accent2(), 0.06f * open));
@@ -204,7 +205,7 @@ public class ClickGuiScreen extends Screen {
 		}
 		for (int i = 0; i < cats.length; i++) {
 			Category c = cats[i];
-			float y = top + i * (tabH + 3);
+			float y = top + i * (tabH + 2);
 			boolean hovered = mx >= tabX && mx < tabX + tabW && my >= y && my < y + tabH;
 			float h = anim("tab" + c, 14).target(hovered || i == selIndex ? 1 : 0).get();
 			if (i != selIndex && h > 0.01f) Render2D.round(g, tabX, y, tabW, tabH, 6, Theme.alpha(0x10FFFFFF, h * open));

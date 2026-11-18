@@ -45,6 +45,7 @@ public class EspModule extends Module {
 	public final BoolSetting redstone = add(new BoolSetting("Redstone", "Hoppers, pistons, observers, dust...", true));
 	public final BoolSetting baseBlocks = add(new BoolSetting("Base Blocks", "Beds, beacons, anvils, signs, furnaces...", true));
 	public final BoolSetting entities = add(new BoolSetting("Entities", "Item frames, armor stands, storage minecarts", true));
+	public final BoolSetting trails = add(new BoolSetting("Trail Blocks", "Torches, lanterns, crafting tables, obsidian", false));
 	public final NumberSetting range = add(new NumberSetting("Range", "Maximum distance to highlight", 128, 16, 512, 16, "m"));
 	public final EnumSetting<Style> style = add(new EnumSetting<>("Style", "How boxes are drawn", Style.BOTH));
 	public final NumberSetting fillOpacity = add(new NumberSetting("Fill Opacity", "Opacity of filled boxes", 18, 2, 80, 1, "%"));
@@ -83,6 +84,7 @@ public class EspModule extends Module {
 			case REDSTONE -> redstone.on();
 			case BASE -> baseBlocks.on();
 			case ENTITY -> entities.on();
+			case TRAIL -> trails.on();
 		};
 	}
 
@@ -192,6 +194,11 @@ public class EspModule extends Module {
 
 	@Override
 	public void onRenderHud(GuiGraphics g, DeltaTracker delta) {
+		if (mc.player != null && counter.on()) drawCounter(g);
+	}
+
+	@Override
+	public void onRenderOverlay(GuiGraphics g, DeltaTracker delta) {
 		if (mc.player == null) return;
 		int w = g.guiWidth(), h = g.guiHeight();
 		if (labels.on()) {
@@ -212,7 +219,6 @@ public class EspModule extends Module {
 				if (count != null) Render2D.text(g, HdFont.BOLD, count, tx, y + (bh - HdFont.BOLD.capHeight(size)) / 2f, size, l.target.color);
 			}
 		}
-		if (counter.on()) drawCounter(g);
 	}
 
 	private void drawCounter(GuiGraphics g) {
@@ -220,10 +226,11 @@ public class EspModule extends Module {
 		for (Target t : Target.VALUES) if (shownCounts[t.ordinal()] > 0) present.add(t);
 		present.sort((a, b) -> Integer.compare(shownCounts[b.ordinal()], shownCounts[a.ordinal()]));
 		if (present.size() > 5) present = present.subList(0, 5);
-		float x = 5, y = 23;
 		float rowH = 8.5f, size = 6f;
 		float w = 96;
 		float hgt = 15 + Math.max(1, present.size()) * rowH + 3;
+		float[] p = com.demon.client.hud.HudLayout.place(com.demon.client.hud.HudLayout.Anchor.TOP_LEFT, w, hgt);
+		float x = p[0], y = p[1];
 		Ui.hud(g, x, y, w, hgt, 1f);
 		Ui.marker(g, x + 4, y + 4, 6.5f, 1f);
 		Render2D.text(g, HdFont.BOLD, "ESP", x + 8.5f, y + 5, 6.2f, Theme.TEXT);

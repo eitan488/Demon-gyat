@@ -49,7 +49,7 @@ public final class ChunkScanner {
 	}
 
 	public static boolean active() {
-		return ModuleManager.chunkFinder.isEnabled() || ModuleManager.esp.isEnabled();
+		return ModuleManager.chunkFinder.isEnabled() || ModuleManager.esp.isEnabled() || ModuleManager.scanNeeded();
 	}
 
 	public static void clear() {

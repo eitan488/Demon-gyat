@@ -197,6 +197,9 @@ public class ChunkFinderModule extends Module {
 		}
 		if (saveLog.on()) writeLog(d, kind, summary.toString());
 		if (ModuleManager.autoRtp != null) ModuleManager.autoRtp.onFind(d, kind, summary.toString());
+		if (ModuleManager.waypoints.isEnabled() && ModuleManager.waypoints.autoFinds.on()) {
+			com.demon.client.util.Waypoints.add(kind.title + " " + (int) score(d) + "pts", bx, Math.max(d.maxY, 0), bz, kind.color, "find" + d.x + "," + d.z);
+		}
 	}
 
 	private void writeLog(ChunkData d, Kind kind, String summary) {
@@ -282,10 +285,13 @@ public class ChunkFinderModule extends Module {
 	// ------------------------------------------------------------------ HUD
 
 	@Override
+	public void onRenderOverlay(GuiGraphics g, DeltaTracker delta) {
+		if (mc.player != null && cards.on()) drawCards(g);
+	}
+
+	@Override
 	public void onRenderHud(GuiGraphics g, DeltaTracker delta) {
-		if (mc.player == null) return;
-		if (cards.on()) drawCards(g);
-		if (hudList.on()) drawList(g);
+		if (mc.player != null && hudList.on()) drawList(g);
 	}
 
 	private record Card(ChunkData data, float x, float y, float scale, int dist, boolean compact, float w, float h) {}
@@ -400,8 +406,8 @@ public class ChunkFinderModule extends Module {
 		int rows = Math.min(5, sus.size());
 		float w = 122, rowH = 9;
 		float h = 16 + Math.max(1, rows) * rowH + 3;
-		float x = sw - w - 5;
-		float y = ModuleManager.hud.isEnabled() && ModuleManager.hud.moduleList.on() ? ModuleManager.hud.listBottom + 3 : 5;
+		float[] pos = com.demon.client.hud.HudLayout.place(com.demon.client.hud.HudLayout.Anchor.TOP_RIGHT, w, h);
+		float x = pos[0], y = pos[1];
 		Ui.hud(g, x, y, w, h, 1f);
 		Ui.marker(g, x + 4, y + 4.5f, 6.5f, 1f);
 		Render2D.text(g, HdFont.BOLD, "SUS CHUNKS", x + 8.5f, y + 5.5f, 6f, Theme.TEXT);

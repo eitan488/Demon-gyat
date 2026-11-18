@@ -62,7 +62,13 @@ public final class ChunkData {
 
 	public int total() {
 		int n = 0;
-		for (Target t : Target.VALUES) n += count(t);
+		for (Target t : Target.VALUES) if (t.group != Target.Group.TRAIL) n += count(t);
+		return n;
+	}
+
+	public int trailCount() {
+		int n = 0;
+		for (Target t : Target.VALUES) if (t.group == Target.Group.TRAIL) n += count(t);
 		return n;
 	}
 
@@ -81,7 +87,7 @@ public final class ChunkData {
 	/** Targets present in this chunk, most numerous first. */
 	public List<Target> sortedTargets() {
 		List<Target> list = new ArrayList<>();
-		for (Target t : Target.VALUES) if (count(t) > 0) list.add(t);
+		for (Target t : Target.VALUES) if (count(t) > 0 && t.group != Target.Group.TRAIL) list.add(t);
 		list.sort((a, b) -> Integer.compare(count(b), count(a)));
 		return list;
 	}

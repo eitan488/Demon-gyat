@@ -25,7 +25,7 @@ public class HudModule extends Module {
 	/** Bottom edge of the module list, so other right-side panels can stack below it. */
 	public float listBottom = 6;
 
-	private static final float SIZE = 6.6f;
+	private static final float SIZE = 6.0f;
 
 	public HudModule() {
 		super("HUD", "Watermark, module list, coordinates and toasts", Category.CLIENT, -1, "hud");
@@ -41,7 +41,7 @@ public class HudModule extends Module {
 	}
 
 	private void drawWatermark(GuiGraphics g) {
-		float x = 5, y = 5, h = 14;
+		float h = 14;
 		String fps = mc.getFps() + " FPS";
 		String ping = null;
 		if (mc.getConnection() != null && !mc.isSingleplayer()) {
@@ -52,6 +52,8 @@ public class HudModule extends Module {
 		float logoW = cap / (1 - 2 * Render2D.LOGO_SMALL_PAD) * Render2D.LOGO_SMALL_ASPECT - 2 * Render2D.LOGO_SMALL_PAD * cap / (1 - 2 * Render2D.LOGO_SMALL_PAD);
 		float statsW = HdFont.MEDIUM.width(fps, SIZE) + (ping != null ? 9 + HdFont.MEDIUM.width(ping, SIZE) : 0);
 		float w = 4 + 10 + 4 + logoW + 7 + statsW + 6;
+		float[] p = com.demon.client.hud.HudLayout.place(com.demon.client.hud.HudLayout.Anchor.TOP_LEFT, w, h);
+		float x = p[0], y = p[1];
 		Ui.hud(g, x, y, w, h, 1f);
 		Render2D.image(g, Render2D.LOGO_ICON, x + 3, y + 2, 10, 10, 0xFFFFFFFF);
 		Render2D.logoSmall(g, x + 17, y + (h - cap) / 2f, cap, 1f);
@@ -75,12 +77,13 @@ public class HudModule extends Module {
 			if (m.arrayAnim.get() > 0.01f) list.add(m);
 		}
 		list.sort((a, b) -> Float.compare(width(b), width(a)));
-		float y = 5;
+		float y = com.demon.client.hud.HudLayout.used(com.demon.client.hud.HudLayout.Anchor.TOP_RIGHT);
+		float top = y;
 		int i = 0;
 		for (Module m : list) {
 			float a = m.arrayAnim.get();
-			float w = width(m) + 11;
-			float h = 11;
+			float w = width(m) + 10;
+			float h = 9.5f;
 			float x = screenW - 5 - w * a;
 			int color = Theme.wave(i * 0.18f);
 			Render2D.round(g, x, y, w, h, 3, Theme.alpha(Theme.HUD_BG, a));
@@ -92,6 +95,7 @@ public class HudModule extends Module {
 			i++;
 		}
 		listBottom = y;
+		if (y > top) com.demon.client.hud.HudLayout.reserve(com.demon.client.hud.HudLayout.Anchor.TOP_RIGHT, y - top - 2);
 	}
 
 	private static float width(Module m) {
@@ -109,11 +113,11 @@ public class HudModule extends Module {
 		String facing = mc.player.getDirection().getName().toUpperCase();
 		String l2 = nether ? "OVERWORLD" : "NETHER";
 		float h = 11;
-		float y = sh - (mc.gui.getChat().isChatFocused() ? 28 : 16);
-		float x = 5;
 		float s = 6.2f;
 		float w = 6 + HdFont.BOLD.width("XYZ", s) + 4 + HdFont.MEDIUM.width(main, s) + 8 + HdFont.BOLD.width(l2, s) + 4
 			+ HdFont.MEDIUM.width(other, s) + 8 + HdFont.SEMIBOLD.width(facing, s) + 6;
+		float[] pos = com.demon.client.hud.HudLayout.place(com.demon.client.hud.HudLayout.Anchor.BOTTOM_LEFT, w, h);
+		float x = pos[0], y = pos[1];
 		Ui.hud(g, x, y, w, h, 1f);
 		float cx = x + 6;
 		cx += Render2D.text(g, HdFont.BOLD, "XYZ", cx, y + (h - HdFont.BOLD.capHeight(s)) / 2f, s, Theme.accent1()) + 4;

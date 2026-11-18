@@ -115,4 +115,12 @@ public abstract class Module {
 	public void onRender3D(Render3D r) {}
 
 	public void onRenderHud(GuiGraphics g, DeltaTracker delta) {}
+
+	/** World-anchored 2D drawing (labels, numbers); rendered before HUD panels so panels stay on top. */
+	public void onRenderOverlay(GuiGraphics g, DeltaTracker delta) {}
+
+	/** Enable a module before the config is loaded (the config can still turn it off). */
+	public void enableByDefault() {
+		if (!isEnabled()) setEnabled(true);
+	}
 }

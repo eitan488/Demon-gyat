@@ -17,8 +17,38 @@ A modern base-hunting utility mod for **Minecraft 1.21.11 (Fabric)**.
 
 1. Install **Fabric Loader** for Minecraft **1.21.11** (https://fabricmc.net/use/installer/).
 2. Download **Fabric API** for 1.21.11 (for example `0.141.6+1.21.11`) and put it in your `mods` folder.
-3. Put `demon-client-1.1.0.jar` in the same `mods` folder.
+3. Put `demon-client-1.2.0.jar` in the same `mods` folder.
 4. Start the game with the Fabric profile.
+
+## All 62 modules
+
+| Category | Modules |
+| --- | --- |
+| **Hunting** | Chunk Finder, Auto RTP, New Chunks, Waypoints, Portal Finder, Spawner Finder, Sign Reader, Item Frames, Trail Finder, Logout Spots, Visual Range, Chunk Borders |
+| **PvP (visuals)** | Target HUD, Damage Numbers, Kill Effects, Crosshair, Hit Sounds, Health Bars, Low Health, Armor Alert, Totem Pops, Combat Stats |
+| **Render** | ESP, Freecam, Nametags, Fullbright, Zoom, No Render, Block Highlight, Breadcrumbs, Time Changer, View Model, Trails |
+| **Movement** | Sprint, Auto Walk, Yaw Lock, Elytra Boost, Safe Walk, Parkour, Anti AFK |
+| **Player** | Auto Reconnect, Auto Respawn, Auto Tool, Auto Eat, Chat Timestamps, Copy Coords, Death Coords |
+| **HUD** | HUD (watermark, module list, coords), Radar, Compass Bar, Hunt Stats, Armor HUD, Potion HUD, Keystrokes, CPS, Speed, TPS, Server Info, Clock, Inventory Viewer, Performance |
+| **Client** | Interface (theme, sounds, animations, main menu) |
+
+Highlights:
+
+- **Base hunting set**:
+  - New Chunks marks freshly generated terrain, so you can follow old trails.
+  - Waypoints (B adds one) show sky beams and labels, and every find and every death is saved as a waypoint.
+  - Portal, Spawner (shows the mob type), Sign Reader (logs sign text) and Item Frames (shows the item) highlight player activity.
+  - Trail Finder marks torches, lanterns, crafting tables and obsidian.
+  - Logout Spots shows ghosts where players disconnected.
+  - Visual Range alerts when players come into or leave render distance.
+  - Radar and Compass Bar show finds and waypoints around you.
+  - Hunt Stats tracks the session: time, chunks scanned, finds and distance travelled.
+- **PvP visuals** (cosmetic and informational only, no automation):
+  - Animated Target HUD with the opponent's face, a health bar with a delayed damage trail, armor, and WINNING/LOSING.
+  - Floating damage numbers, health bars above entities, and an HD crosshair with hit markers and an attack-charge bar.
+  - Kill effects: lightning, a particle burst and an animated ELIMINATED banner with your kill streak.
+  - A low-health screen pulse with heartbeat, armor-break alerts, totem-pop counter and session K/D.
+- **HUD layout**: every HUD panel has a *Position* setting (corners, top/bottom centre, left/right middle) and panels in the same spot stack automatically without overlapping.
 
 ## Controls
 
@@ -26,6 +56,9 @@ A modern base-hunting utility mod for **Minecraft 1.21.11 (Fabric)**.
 | --- | --- |
 | **Right Shift** | Open / close the Demon menu (also: *✦ Demon* button in the pause menu) |
 | **V** | Toggle Freecam |
+| **B** | Add a waypoint where you stand |
+| **Z** (hold) | Zoom |
+| **N** | Copy your coordinates |
 | Freecam: **W A S D** | Fly where you look |
 | Freecam: **Space / Shift** | Up / down |
 | Freecam: **Ctrl (sprint)** | Speed boost |

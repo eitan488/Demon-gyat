@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 public class DemonClient implements ClientModInitializer {
 	public static final String MOD_ID = "demon";
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.2.0";
 	public static final Logger LOG = LoggerFactory.getLogger("Demon");
 
 	public static Identifier id(String path) {
@@ -31,16 +31,23 @@ public class DemonClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ModuleManager.init();
-		ModuleManager.hud.setEnabled(true);
+		ModuleManager.defaults();
 		Config.load();
 		ModuleManager.ui.apply();
 
 		ChunkScanner.init();
 		Render3D.init();
 		HudRenderer.init();
+		// HD crosshair replaces the vanilla one while its module is on
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.replaceElement(
+			net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CROSSHAIR, vanilla -> (g, delta) -> {
+				if (ModuleManager.crosshair.isEnabled()) ModuleManager.crosshair.draw(g);
+				else vanilla.render(g, delta);
+			});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ChunkScanner.tick();
+			com.demon.client.combat.CombatFx.tick();
 			ModuleManager.tick();
 			Config.tick();
 		});

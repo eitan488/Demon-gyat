@@ -49,7 +49,7 @@ public final class Notifications {
 		if (TOASTS.isEmpty()) return;
 		int sw = g.guiWidth(), sh = g.guiHeight();
 		float now = Anim.time();
-		float stackY = sh - 8;
+		float stackY = sh - com.demon.client.hud.HudLayout.used(com.demon.client.hud.HudLayout.Anchor.BOTTOM_RIGHT) - 2;
 		Iterator<Toast> it = TOASTS.iterator();
 		List<Toast> live = new ArrayList<>();
 		while (it.hasNext()) {

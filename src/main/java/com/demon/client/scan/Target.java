@@ -54,10 +54,15 @@ public enum Target {
 	ARMOR_STAND("Armor Stand", 0xFFE5E7EB, Group.ENTITY, 3, 0),
 	CHEST_MINECART("Chest Minecart", 0xFFFFC46B, Group.ENTITY, 1, 0),
 	HOPPER_MINECART("Hopper Minecart", 0xFFB8C2FF, Group.ENTITY, 0, 3),
-	CHESTED_ANIMAL("Chested Donkey/Llama", 0xFFE0A96D, Group.ENTITY, 6, 0);
+	CHESTED_ANIMAL("Chested Donkey/Llama", 0xFFE0A96D, Group.ENTITY, 6, 0),
+	// ---- trails (player activity; no score weight)
+	TORCH("Torch", 0xFFFFD27A, Group.TRAIL, 0, 0),
+	LANTERN("Lantern", 0xFFFFC14D, Group.TRAIL, 0, 0),
+	CRAFTING_TABLE("Crafting Table", 0xFFC8955C, Group.TRAIL, 0, 0),
+	OBSIDIAN("Obsidian", 0xFF6D5BD0, Group.TRAIL, 0, 0);
 
 	public enum Group {
-		STORAGE("Storage"), REDSTONE("Redstone"), BASE("Base Blocks"), ENTITY("Entities");
+		STORAGE("Storage"), REDSTONE("Redstone"), BASE("Base Blocks"), ENTITY("Entities"), TRAIL("Trail Blocks");
 
 		public final String title;
 
@@ -130,6 +135,10 @@ public enum Target {
 		if (b instanceof BedBlock) return BED;
 		if (b instanceof SignBlock) return SIGN;
 		if (b == Blocks.NETHER_PORTAL) return PORTAL;
+		if (b == Blocks.TORCH || b == Blocks.WALL_TORCH || b == Blocks.SOUL_TORCH || b == Blocks.SOUL_WALL_TORCH) return TORCH;
+		if (b == Blocks.LANTERN || b == Blocks.SOUL_LANTERN) return LANTERN;
+		if (b == Blocks.CRAFTING_TABLE) return CRAFTING_TABLE;
+		if (b == Blocks.OBSIDIAN || b == Blocks.CRYING_OBSIDIAN) return OBSIDIAN;
 		return null;
 	}
 
