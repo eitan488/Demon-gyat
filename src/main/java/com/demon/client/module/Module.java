@@ -52,6 +52,11 @@ public abstract class Module {
 		return enabled;
 	}
 
+	/** Whether the on/off state is restored on the next launch (false for things that must never auto-start). */
+	public boolean persistEnabled() {
+		return true;
+	}
+
 	/** Modules that are always active (e.g. Interface) return false. */
 	public boolean toggleable() {
 		return true;

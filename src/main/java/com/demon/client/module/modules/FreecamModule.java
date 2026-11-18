@@ -113,4 +113,9 @@ public class FreecamModule extends Module {
 	public String info() {
 		return speed.display();
 	}
+
+	@Override
+	public boolean persistEnabled() {
+		return false;
+	}
 }

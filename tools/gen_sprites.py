@@ -27,12 +27,6 @@ def rounded(size, radius, outline=0):
     return img
 
 DENS = 4  # texels per GUI pixel
-for name, logical, border in [("round_s", 8, 3), ("round_m", 16, 6), ("round_l", 28, 12)]:
-    tex = logical * DENS
-    save(rounded(tex, border * DENS), name,
-         {"gui": {"scaling": {"type": "nine_slice", "width": logical, "height": logical, "border": border}}})
-    save(rounded(tex, border * DENS, outline=DENS), name + "_outline",
-         {"gui": {"scaling": {"type": "nine_slice", "width": logical, "height": logical, "border": border}}})
 
 # soft shadow / glow: a rounded rect blurred, padded by `pad` logical px each side
 logical, pad = 64, 16
@@ -43,23 +37,7 @@ p = pad * DENS
 d.rounded_rectangle([p, p, tex - p - 1, tex - p - 1], 8 * DENS, fill=255)
 base = base.filter(ImageFilter.GaussianBlur(6 * DENS))
 img = Image.new("RGBA", (tex, tex), (255, 255, 255, 0)); img.putalpha(base)
-save(img, "shadow", {"gui": {"scaling": {"type": "nine_slice", "width": logical, "height": logical, "border": 24}}})
-
-# circle
-c = 64
-big = Image.new("L", (c * SS, c * SS), 0)
-ImageDraw.Draw(big).ellipse([0, 0, c * SS - 1, c * SS - 1], fill=255)
-img = Image.new("RGBA", (c, c), (255, 255, 255, 0)); img.putalpha(big.resize((c, c), Image.LANCZOS))
-save(img, "circle", {"gui": {"scaling": {"type": "stretch"}}})
-
-# ring
-big = Image.new("L", (c * SS, c * SS), 0)
-dd = ImageDraw.Draw(big)
-dd.ellipse([0, 0, c * SS - 1, c * SS - 1], fill=255)
-w = 5 * SS
-dd.ellipse([w, w, c * SS - 1 - w, c * SS - 1 - w], fill=0)
-img = Image.new("RGBA", (c, c), (255, 255, 255, 0)); img.putalpha(big.resize((c, c), Image.LANCZOS))
-save(img, "ring", {"gui": {"scaling": {"type": "stretch"}}})
+save(img, "shadow", {"gui": {"scaling": {"type": "nine_slice", "width": logical, "height": logical, "border": 24, "stretch_inner": True}}})
 
 # soft radial glow (particles / bloom blobs)
 g = 128
@@ -99,14 +77,14 @@ S = 512
 icon = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 grad = Image.new("RGBA", (S, S))
 gp = grad.load()
-c1, c2 = (124, 58, 237), (236, 72, 153)  # violet -> pink
+c1, c2 = (47, 123, 255), (34, 211, 238)  # blue -> cyan
 for y in range(S):
     for x in range(S):
         t = (x + y) / (2 * S - 2)
         gp[x, y] = tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3)) + (255,)
 mask = Image.new("L", (S, S), 0)
 ImageDraw.Draw(mask).rounded_rectangle([0, 0, S - 1, S - 1], 110, fill=255)
-bg = Image.new("RGBA", (S, S), (14, 10, 24, 255))
+bg = Image.new("RGBA", (S, S), (6, 12, 26, 255))
 icon.paste(bg, (0, 0), mask)
 # inner gradient border
 inner = Image.new("L", (S, S), 0)
@@ -126,10 +104,11 @@ ds.rectangle([150, 170, 250, 420], fill=255)
 ds.rounded_rectangle([215, 230, 320, 360], 60, fill=0)
 ds.rectangle([215, 230, 250, 360], fill=0)
 glowm = shape.filter(ImageFilter.GaussianBlur(22))
-gl = Image.new("RGBA", (S, S), (236, 72, 153, 0)); gl.putalpha(glowm.point(lambda v: int(v * 0.8)))
+gl = Image.new("RGBA", (S, S), (34, 211, 238, 0)); gl.putalpha(glowm.point(lambda v: int(v * 0.8)))
 icon = Image.alpha_composite(icon, gl)
 icon.paste(grad, (0, 0), shape)
+os.makedirs(os.path.join(OUT, "assets/demon/textures/hd"), exist_ok=True)
+icon.resize((256, 256), Image.LANCZOS).save(os.path.join(OUT, "assets/demon/textures/hd/logo_icon.png"))
 icon = icon.resize((128, 128), Image.LANCZOS)
-os.makedirs(os.path.join(OUT, "assets/demon"), exist_ok=True)
 icon.save(os.path.join(OUT, "assets/demon/icon.png"))
 print("ok")

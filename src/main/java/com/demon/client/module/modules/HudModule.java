@@ -1,9 +1,10 @@
 package com.demon.client.module.modules;
 
-import com.demon.client.DemonClient;
+import com.demon.client.gui.Ui;
 import com.demon.client.module.Category;
 import com.demon.client.module.Module;
 import com.demon.client.module.ModuleManager;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.setting.BoolSetting;
 import com.demon.client.util.Theme;
@@ -21,6 +22,11 @@ public class HudModule extends Module {
 	public final BoolSetting coords = add(new BoolSetting("Coordinates", "Position, nether coords and facing", true));
 	public final BoolSetting notifications = add(new BoolSetting("Notifications", "Pop-up toasts for toggles and finds", true));
 
+	/** Bottom edge of the module list, so other right-side panels can stack below it. */
+	public float listBottom = 6;
+
+	private static final float SIZE = 6.6f;
+
 	public HudModule() {
 		super("HUD", "Watermark, module list, coordinates and toasts", Category.CLIENT, -1, "hud");
 	}
@@ -29,29 +35,35 @@ public class HudModule extends Module {
 	public void onRenderHud(GuiGraphics g, DeltaTracker delta) {
 		if (mc.player == null) return;
 		if (watermark.on()) drawWatermark(g);
+		listBottom = 5;
 		if (moduleList.on()) drawModuleList(g);
 		if (coords.on()) drawCoords(g);
 	}
 
 	private void drawWatermark(GuiGraphics g) {
-		int x = 6, y = 6, h = 18;
-		String fps = mc.getFps() + " fps";
+		float x = 5, y = 5, h = 14;
+		String fps = mc.getFps() + " FPS";
 		String ping = null;
 		if (mc.getConnection() != null && !mc.isSingleplayer()) {
 			PlayerInfo info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
-			if (info != null) ping = info.getLatency() + "ms";
+			if (info != null) ping = info.getLatency() + " ms";
 		}
-		String right = ping == null ? fps : fps + "  ·  " + ping;
-		float logoW = 7 * Render2D.LOGO_SMALL_ASPECT * 1.5f - 7 * 0.5f; // approx cap width
-		int w = (int) (6 + 12 + 5 + logoW + 10 + Render2D.width(right) + 8);
-		Render2D.shadow(g, x, y, w, h, 0x50000000);
-		Render2D.round(g, x, y, w, h, 6, 0xD80E0B16);
-		Render2D.outline(g, x, y, w, h, 6, Theme.BORDER);
-		Render2D.sprite(g, Render2D.LOGO_ICON, x + 4, y + 3, 12, 12, 0xFFFFFFFF);
-		float lw = Render2D.logoSmall(g, x + 21, y + 5.5f, 7, 1f);
-		int tx = (int) (x + 21 + lw + 9);
-		Render2D.rect(g, tx - 4, y + 5, 1, 8, 0x30FFFFFF);
-		Render2D.text(g, right, tx + 1, y + 5, Theme.SUBTEXT);
+		float cap = 5.4f;
+		float logoW = cap / (1 - 2 * Render2D.LOGO_SMALL_PAD) * Render2D.LOGO_SMALL_ASPECT - 2 * Render2D.LOGO_SMALL_PAD * cap / (1 - 2 * Render2D.LOGO_SMALL_PAD);
+		float statsW = HdFont.MEDIUM.width(fps, SIZE) + (ping != null ? 9 + HdFont.MEDIUM.width(ping, SIZE) : 0);
+		float w = 4 + 10 + 4 + logoW + 7 + statsW + 6;
+		Ui.hud(g, x, y, w, h, 1f);
+		Render2D.image(g, Render2D.LOGO_ICON, x + 3, y + 2, 10, 10, 0xFFFFFFFF);
+		Render2D.logoSmall(g, x + 17, y + (h - cap) / 2f, cap, 1f);
+		float tx = x + 17 + logoW + 4;
+		Render2D.rect(g, tx, y + 3.5f, 0.35f, h - 7, 0x3A9CC4FF);
+		tx += 3.5f;
+		Render2D.textMid(g, HdFont.MEDIUM, fps, tx, y, h, SIZE, Theme.SUBTEXT);
+		if (ping != null) {
+			float px = tx + HdFont.MEDIUM.width(fps, SIZE) + 4;
+			Render2D.circle(g, px, y + h / 2f, 0.9f, Theme.MUTED);
+			Render2D.textMid(g, HdFont.MEDIUM, ping, px + 4, y, h, SIZE, Theme.SUBTEXT);
+		}
 	}
 
 	private void drawModuleList(GuiGraphics g) {
@@ -62,54 +74,52 @@ public class HudModule extends Module {
 			m.arrayAnim.target(m.isEnabled() ? 1 : 0);
 			if (m.arrayAnim.get() > 0.01f) list.add(m);
 		}
-		list.sort((a, b) -> Integer.compare(width(b), width(a)));
-		float y = 6;
+		list.sort((a, b) -> Float.compare(width(b), width(a)));
+		float y = 5;
 		int i = 0;
 		for (Module m : list) {
 			float a = m.arrayAnim.get();
-			int w = width(m) + 10;
-			int h = 13;
-			float x = screenW - 6 - w * a;
+			float w = width(m) + 11;
+			float h = 11;
+			float x = screenW - 5 - w * a;
 			int color = Theme.wave(i * 0.18f);
-			Render2D.round(g, x, y, w, h, 3, Theme.alpha(0xD80E0B16, a));
-			Render2D.round(g, x + w - 2.5f, y + 2, 2.5f, h - 4, 1, Theme.alpha(color, a));
-			Render2D.text(g, m.name, x + 4, y + 3, Theme.alpha(color, a), false);
+			Render2D.round(g, x, y, w, h, 3, Theme.alpha(Theme.HUD_BG, a));
+			Render2D.capsule(g, x + w - 2.6f, y + 2.5f, 1.6f, h - 5, Theme.alpha(color, a));
+			Render2D.textMid(g, HdFont.SEMIBOLD, m.name, x + 4.5f, y, h, SIZE, Theme.alpha(Theme.TEXT, a));
 			String info = m.info();
-			if (info != null) Render2D.text(g, info, x + 4 + Render2D.width(m.name) + 4, y + 3, Theme.alpha(Theme.SUBTEXT, a), false);
+			if (info != null) Render2D.textMid(g, HdFont.MEDIUM, info, x + 4.5f + HdFont.SEMIBOLD.width(m.name, SIZE) + 3.5f, y, h, SIZE, Theme.alpha(color, a));
 			y += (h + 2) * a;
 			i++;
 		}
+		listBottom = y;
 	}
 
-	private static int width(Module m) {
+	private static float width(Module m) {
 		String info = m.info();
-		return Render2D.width(m.name) + (info != null ? 4 + Render2D.width(info) : 0);
+		return HdFont.SEMIBOLD.width(m.name, SIZE) + (info != null ? 3.5f + HdFont.MEDIUM.width(info, SIZE) : 0);
 	}
 
 	private void drawCoords(GuiGraphics g) {
 		int sh = g.guiHeight();
 		double px = mc.player.getX(), py = mc.player.getY(), pz = mc.player.getZ();
 		boolean nether = mc.level != null && mc.level.dimension() == Level.NETHER;
-		String main = String.format("%d %d %d", (int) Math.floor(px), (int) Math.floor(py), (int) Math.floor(pz));
-		String other = nether ? String.format("%d %d", (int) Math.floor(px * 8), (int) Math.floor(pz * 8))
-			: String.format("%d %d", (int) Math.floor(px / 8), (int) Math.floor(pz / 8));
+		String main = String.format("%d  %d  %d", (int) Math.floor(px), (int) Math.floor(py), (int) Math.floor(pz));
+		String other = nether ? String.format("%d  %d", (int) Math.floor(px * 8), (int) Math.floor(pz * 8))
+			: String.format("%d  %d", (int) Math.floor(px / 8), (int) Math.floor(pz / 8));
 		String facing = mc.player.getDirection().getName().toUpperCase();
-		int y = sh - (mc.gui.getChat().isChatFocused() ? 30 : 16);
-		int x = 6;
-		String l1 = "XYZ";
-		String l2 = nether ? "OW" : "NETHER";
-		int w = 8 + Render2D.width(l1) + 4 + Render2D.width(main) + 10 + Render2D.width(l2) + 4 + Render2D.width(other) + 10 + Render2D.width(facing) + 8;
-		Render2D.round(g, x, y, w, 12, 3, 0xC00E0B16);
-		int cx = x + 6;
-		Render2D.text(g, l1, cx, y + 2, Theme.accent1());
-		cx += Render2D.width(l1) + 4;
-		Render2D.text(g, main, cx, y + 2, Theme.TEXT);
-		cx += Render2D.width(main) + 10;
-		Render2D.text(g, l2, cx, y + 2, nether ? 0xFF4ADE80 : 0xFFF87171);
-		cx += Render2D.width(l2) + 4;
-		Render2D.text(g, other, cx, y + 2, Theme.SUBTEXT);
-		cx += Render2D.width(other) + 10;
-		Render2D.text(g, facing, cx, y + 2, Theme.accent2());
+		String l2 = nether ? "OVERWORLD" : "NETHER";
+		float h = 11;
+		float y = sh - (mc.gui.getChat().isChatFocused() ? 28 : 16);
+		float x = 5;
+		float s = 6.2f;
+		float w = 6 + HdFont.BOLD.width("XYZ", s) + 4 + HdFont.MEDIUM.width(main, s) + 8 + HdFont.BOLD.width(l2, s) + 4
+			+ HdFont.MEDIUM.width(other, s) + 8 + HdFont.SEMIBOLD.width(facing, s) + 6;
+		Ui.hud(g, x, y, w, h, 1f);
+		float cx = x + 6;
+		cx += Render2D.text(g, HdFont.BOLD, "XYZ", cx, y + (h - HdFont.BOLD.capHeight(s)) / 2f, s, Theme.accent1()) + 4;
+		cx += Render2D.text(g, HdFont.MEDIUM, main, cx, y + (h - HdFont.MEDIUM.capHeight(s)) / 2f, s, Theme.TEXT) + 8;
+		cx += Render2D.text(g, HdFont.BOLD, l2, cx, y + (h - HdFont.BOLD.capHeight(s)) / 2f, s, nether ? 0xFF4ADE80 : 0xFFFB7185) + 4;
+		cx += Render2D.text(g, HdFont.MEDIUM, other, cx, y + (h - HdFont.MEDIUM.capHeight(s)) / 2f, s, Theme.SUBTEXT) + 8;
+		Render2D.text(g, HdFont.SEMIBOLD, facing, cx, y + (h - HdFont.SEMIBOLD.capHeight(s)) / 2f, s, Theme.accent2());
 	}
-
 }

@@ -13,7 +13,7 @@ import org.lwjgl.glfw.GLFW;
 
 /** Always-on module that holds GUI / theme / main menu options. Its keybind opens the click GUI. */
 public class InterfaceModule extends Module {
-	public final EnumSetting<Theme.Palette> theme = add(new EnumSetting<>("Theme", "Accent colours used everywhere", Theme.Palette.DEMON)
+	public final EnumSetting<Theme.Palette> theme = add(new EnumSetting<>("Theme", "Accent colours used everywhere", Theme.Palette.AZURE)
 		.onChange(() -> Theme.palette = this.theme.get()));
 	public final BoolSetting sounds = add(new BoolSetting("GUI Sounds", "Clicks, toggles and menu sound effects", true));
 	public final NumberSetting volume = add(new NumberSetting("Sound Volume", "Volume of GUI sounds", 100, 0, 100, 5, "%"));

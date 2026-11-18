@@ -2,6 +2,7 @@ package com.demon.client.gui;
 
 import com.demon.client.DemonClient;
 import com.demon.client.module.ModuleManager;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.util.Anim;
 import com.demon.client.util.Sounds;
@@ -35,15 +36,15 @@ public class DemonTitleScreen extends Screen {
 	private static boolean introPlayed;
 
 	private static final String[] LETTERS = {"d", "e", "m", "o", "n"};
-	private static final float[] ASPECT = {0.9375f, 0.85417f, 1.1125f, 0.98333f, 0.94167f};
-	private static final float PAD = 0.16667f;
-	private static final Identifier[] SPRITE = new Identifier[5];
-	private static final Identifier[] SPRITE_GLOW = new Identifier[5];
+	private static final float[] ASPECT = {0.93139f, 0.85031f, 1.11019f, 0.98337f, 0.93971f};
+	private static final float PAD = 0.16632f;
+	private static final String[] SPRITE = new String[5];
+	private static final String[] SPRITE_GLOW = new String[5];
 
 	static {
 		for (int i = 0; i < 5; i++) {
-			SPRITE[i] = DemonClient.id("logo_" + LETTERS[i]);
-			SPRITE_GLOW[i] = DemonClient.id("logo_" + LETTERS[i] + "_glow");
+			SPRITE[i] = "logo_" + LETTERS[i];
+			SPRITE_GLOW[i] = "logo_" + LETTERS[i] + "_glow";
 		}
 	}
 
@@ -190,7 +191,7 @@ public class DemonTitleScreen extends Screen {
 		float reveal = Anim.easeOutCubic(Anim.progress(t, T_SUB, T_SUB + 0.5f));
 		if (reveal > 0) {
 			g.enableScissor((int) (subX - subPad), (int) (subY - subPad) - 1, (int) (subX - subPad + subW * reveal) + 1, (int) (subY - subPad + subH) + 1);
-			Render2D.sprite(g, Render2D.LOGO_CLIENT, subX - subPad, subY - subPad, subW, subH, Theme.alpha(Theme.lerp(0xFFFFFFFF, Theme.accent2(), 0.35f), 0.85f));
+			Render2D.image(g, Render2D.LOGO_CLIENT, subX - subPad, subY - subPad, subW, subH, Theme.alpha(Theme.lerp(0xFFFFFFFF, Theme.accent2(), 0.35f), 0.85f));
 			g.disableScissor();
 		}
 		// light sweep over the logo
@@ -209,10 +210,10 @@ public class DemonTitleScreen extends Screen {
 		// tagline
 		float ui = Anim.easeOutCubic(Anim.progress(t, T_UI, T_UI + 0.5f));
 		float tagY = subY + subCap + 9;
-		Render2D.text(g, "Base hunting utility  ·  Fabric 1.21.11", leftX + 1 - 20 * (1 - ui), tagY, Theme.alpha(Theme.SUBTEXT, ui));
+		Render2D.text(g, HdFont.MEDIUM, "Base hunting utility  \u00B7  Fabric 1.21.11", leftX + 1 - 20 * (1 - ui), tagY, 7.4f, Theme.alpha(Theme.SUBTEXT, ui));
 
 		// ---- buttons
-		int bw = 172, bh = 24, gap = 6;
+		int bw = 158, bh = 21, gap = 5;
 		float by = tagY + 22;
 		int available = (int) (height - 30 - by);
 		if (available < buttons.size() * (bh + gap)) {
@@ -234,20 +235,22 @@ public class DemonTitleScreen extends Screen {
 
 		// ---- footer
 		float foot = Anim.easeOutCubic(Anim.progress(t, T_UI + 0.4f, T_UI + 0.9f));
-		Render2D.text(g, "Copyright Mojang AB. Do not distribute!", 8, height - 12, Theme.alpha(Theme.MUTED, foot * 0.8f));
+		Render2D.text(g, HdFont.REGULAR, "Copyright Mojang AB. Do not distribute!", 8, height - 10, 5.6f, Theme.alpha(Theme.MUTED, foot * 0.8f));
 		String vanilla = "Vanilla menu ›";
-		float vx = 8, vy = height - 24;
-		boolean vh = mx >= vx && mx < vx + Render2D.width(vanilla) && my >= vy - 2 && my < vy + 10;
-		Render2D.text(g, vanilla, vx, vy, Theme.alpha(vh ? Theme.TEXT : Theme.SUBTEXT, foot));
-		regions.add(new Region(vx, vy - 2, Render2D.width(vanilla), 12, () -> {
+		float vx = 8, vy = height - 21;
+		float vw = HdFont.MEDIUM.width(vanilla, 6.2f);
+		boolean vh = mx >= vx && mx < vx + vw && my >= vy - 3 && my < vy + 8;
+		Render2D.text(g, HdFont.MEDIUM, vanilla, vx, vy, 6.2f, Theme.alpha(vh ? Theme.TEXT : Theme.SUBTEXT, foot));
+		regions.add(new Region(vx, vy - 3, vw, 11, () -> {
 			if (ModuleManager.ui != null) ModuleManager.ui.customMenu.set(false);
 			minecraft.setScreen(new TitleScreen());
 		}));
 		String clock = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
 		String user = minecraft.getUser().getName();
-		Render2D.textRight(g, clock, width - 8, height - 12, Theme.alpha(Theme.TEXT, foot));
-		Render2D.textRight(g, user, width - 8 - Render2D.width(clock) - 10, height - 12, Theme.alpha(Theme.SUBTEXT, foot));
-		Render2D.circle(g, width - 8 - Render2D.width(clock) - 10 - Render2D.width(user) - 6, height - 8.5f, 2, Theme.alpha(Theme.SUCCESS, foot));
+		float clockW = HdFont.SEMIBOLD.width(clock, 6.6f), userW = HdFont.MEDIUM.width(user, 6.2f);
+		Render2D.textRight(g, HdFont.SEMIBOLD, clock, width - 8, height - 11, 6.6f, Theme.alpha(Theme.TEXT, foot));
+		Render2D.textRight(g, HdFont.MEDIUM, user, width - 8 - clockW - 9, height - 10.8f, 6.2f, Theme.alpha(Theme.SUBTEXT, foot));
+		Render2D.circle(g, width - 8 - clockW - 9 - userW - 5, height - 8.5f, 1.6f, Theme.alpha(Theme.SUCCESS, foot));
 
 		// ---- intro overlays: black + letterbox + light line
 		if (t < T_UI + 0.6f) {
@@ -271,7 +274,7 @@ public class DemonTitleScreen extends Screen {
 				Render2D.sprite(g, Render2D.SWEEP, 0, height - barH, width, 1, ec);
 			}
 			if (t < T_MOVE) {
-				Render2D.textCentered(g, "click to skip", width / 2f, height - 14, Theme.alpha(Theme.MUTED, 0.6f * Anim.progress(t, 1.2f, 1.6f)));
+				Render2D.textCentered(g, HdFont.MEDIUM, "CLICK TO SKIP", width / 2f, height - 13, 5.4f, Theme.alpha(Theme.MUTED, 0.7f * Anim.progress(t, 1.2f, 1.6f)));
 			}
 		}
 
@@ -331,13 +334,13 @@ public class DemonTitleScreen extends Screen {
 				g.pose().translate(lcx, lcy);
 				g.pose().scale(scale, scale);
 				float dx0 = -(w - 2 * pad) / 2f - pad, dy0 = -cap / 2f - pad;
-				Render2D.sprite(g, SPRITE_GLOW[i], dx0, dy0, w, h, Theme.alpha(color, pulse * alpha));
+				Render2D.image(g, SPRITE_GLOW[i], dx0, dy0, w, h, Theme.alpha(color, pulse * alpha));
 				float glitchAmt = (1 - p) * 6 + (glitch ? 2.5f + random.nextFloat() * 3 : 0);
 				if (glitchAmt > 0.3f) {
-					Render2D.sprite(g, SPRITE[i], dx0 - glitchAmt, dy0, w, h, Theme.alpha(0xFF00E5FF, 0.55f * alpha));
-					Render2D.sprite(g, SPRITE[i], dx0 + glitchAmt, dy0, w, h, Theme.alpha(0xFFFF2D75, 0.55f * alpha));
+					Render2D.image(g, SPRITE[i], dx0 - glitchAmt, dy0, w, h, Theme.alpha(0xFF00E5FF, 0.55f * alpha));
+					Render2D.image(g, SPRITE[i], dx0 + glitchAmt, dy0, w, h, Theme.alpha(0xFFFF2D75, 0.55f * alpha));
 				}
-				Render2D.sprite(g, SPRITE[i], dx0, dy0, w, h, Theme.alpha(Theme.lerp(color, 0xFFFFFFFF, 0.12f), alpha));
+				Render2D.image(g, SPRITE[i], dx0, dy0, w, h, Theme.alpha(Theme.lerp(color, 0xFFFFFFFF, 0.12f), alpha));
 				g.pose().popMatrix();
 			}
 			cx += w - 2 * pad + cap * 0.06f;
@@ -349,67 +352,67 @@ public class DemonTitleScreen extends Screen {
 		boolean hovered = exitStart < 0 && mx >= x && mx < x + w && my >= y && my < y + h;
 		float hv = b.hover.target(hovered ? 1 : 0).get();
 		float ox = hv * 4;
-		if (hv > 0.01f) Render2D.shadow(g, x + ox, y, w, h, Theme.alpha(Theme.accent1(), 0.25f * hv * alpha));
+		float r = h / 2f;
+		if (hv > 0.01f || b.primary) Render2D.shadow(g, x + ox, y, w, h, Theme.alpha(Theme.accent1(), (b.primary ? 0.30f : 0f + 0.30f * hv) * alpha));
 		if (b.primary) {
-			Render2D.roundGradient(g, x + ox, y, w, h, 6, Theme.alpha(Theme.accent1(), (0.55f + 0.25f * hv) * alpha), Theme.alpha(Theme.accent2(), (0.30f + 0.25f * hv) * alpha));
+			Render2D.roundGradient(g, x + ox, y, w, h, r, Theme.alpha(Theme.accent1(), (0.85f + 0.15f * hv) * alpha), Theme.alpha(Theme.accent2(), (0.70f + 0.3f * hv) * alpha));
+			Ui.sheen(g, x + ox, y, w, h * 0.6f, r, 0x2EFFFFFF, alpha);
 		} else {
-			Render2D.round(g, x + ox, y, w, h, 6, Theme.alpha(Theme.lerp(0xB0120E1C, 0xE0201A33, hv), alpha));
+			Render2D.round(g, x + ox, y, w, h, r, Theme.alpha(Theme.lerp(0xC00A1426, 0xE6122442, hv), alpha));
 		}
-		Render2D.outline(g, x + ox, y, w, h, 6, Theme.alpha(Theme.lerp(0x1CFFFFFF, Theme.accent1(), hv * 0.7f), alpha));
-		float barH = 6 + (h - 12) * hv;
-		Render2D.round(g, x + ox + 1, y + h / 2f - barH / 2f, 2.5f, barH, 1, Theme.alpha(Theme.wave(0.2f), Math.max(hv, b.primary ? 0.8f : 0) * alpha));
-		float ty = y + h / 2f - 4;
-		Render2D.icon(g, b.icon, x + ox + 14, y + h / 2f, 9, Theme.alpha(b.primary ? Theme.TEXT : Theme.lerp(Theme.accent1(), Theme.TEXT, hv * 0.4f), alpha));
-		Render2D.text(g, b.label, x + ox + 24 + hv * 2, ty, Theme.alpha(Theme.TEXT, alpha));
-		if (hv > 0.02f) Render2D.text(g, "→", x + ox + w - 16 - 6 * (1 - hv), ty, Theme.alpha(Theme.TEXT, hv * alpha));
+		Render2D.outline(g, x + ox, y, w, h, r, Theme.alpha(b.primary ? 0x40FFFFFF : Theme.lerp(0x2A8CB8FF, Theme.accent1(), hv), alpha));
+		// icon bubble
+		float ic = x + ox + h / 2f + 1;
+		Render2D.circle(g, ic, y + h / 2f, h / 2f - 3, Theme.alpha(b.primary ? 0x33FFFFFF : Theme.lerp(0x1A6EA8FF, Theme.accent1(), hv * 0.6f), alpha));
+		Render2D.icon(g, b.icon, ic, y + h / 2f, h * 0.36f, Theme.alpha(b.primary ? 0xFFFFFFFF : Theme.lerp(Theme.accent2(), 0xFFFFFFFF, hv), alpha));
+		Render2D.textMid(g, HdFont.SEMIBOLD, b.label, x + ox + h + 6 + hv * 2, y, h, 8f, Theme.alpha(Theme.TEXT, alpha));
+		if (hv > 0.02f) Render2D.icon(g, "icon_chevron_right", x + ox + w - 12 - 4 * (1 - hv), y + h / 2f, 7, Theme.alpha(Theme.TEXT, hv * alpha));
 		regions.add(new Region(x, y, w, h, () -> runWithTransition(b.action, b.label.startsWith("Quit"))));
 	}
 
 	private void drawServers(GuiGraphics g, float x, float y, int w, double mx, double my, float alpha) {
 		if (alpha <= 0.01f) return;
-		int cardH = 30;
+		float cardH = 28;
 		int rows = Math.max(1, servers.size());
-		float h = 26 + rows * (cardH + 5) + 4;
-		Render2D.shadow(g, x, y, w, h, Theme.alpha(0xFF000000, 0.4f * alpha));
-		Render2D.round(g, x, y, w, h, 12, Theme.alpha(0xC00E0B16, alpha));
-		Render2D.outline(g, x, y, w, h, 12, Theme.alpha(0x1CFFFFFF, alpha));
-		Render2D.round(g, x + 10, y + 8, 2.5f, 9, 1, Theme.alpha(Theme.wave(0.4f), alpha));
-		Render2D.text(g, "SERVERS", x + 17, y + 9, Theme.alpha(Theme.TEXT, alpha));
-		String manage = "Manage ›";
-		float mxs = x + w - 10 - Render2D.width(manage);
-		boolean mh = mx >= mxs && mx < x + w - 6 && my >= y + 6 && my < y + 20;
-		Render2D.text(g, manage, mxs, y + 9, Theme.alpha(mh ? Theme.accent2() : Theme.SUBTEXT, alpha));
-		regions.add(new Region(mxs - 2, y + 6, Render2D.width(manage) + 6, 14, () -> runWithTransition(() -> minecraft.setScreen(new JoinMultiplayerScreen(this)), false)));
+		float h = 26 + rows * (cardH + 4) + 4;
+		Ui.glass(g, x, y, w, h, 10, alpha * 0.95f);
+		Ui.marker(g, x + 9, y + 9, 7, alpha);
+		Render2D.text(g, HdFont.BOLD, "SERVERS", x + 14.5f, y + 9.8f, 6.6f, Theme.alpha(Theme.TEXT, alpha));
+		String manage = "Manage";
+		float mw = HdFont.MEDIUM.width(manage, 6.2f);
+		float mxs = x + w - 18 - mw;
+		boolean mh = mx >= mxs - 3 && mx < x + w - 6 && my >= y + 5 && my < y + 20;
+		Render2D.text(g, HdFont.MEDIUM, manage, mxs, y + 10, 6.2f, Theme.alpha(mh ? Theme.accent2() : Theme.SUBTEXT, alpha));
+		Render2D.icon(g, "icon_chevron_right", x + w - 12, y + 12.3f, 6, Theme.alpha(mh ? Theme.accent2() : Theme.SUBTEXT, alpha));
+		regions.add(new Region(mxs - 3, y + 5, mw + 15, 15, () -> runWithTransition(() -> minecraft.setScreen(new JoinMultiplayerScreen(this)), false)));
 
-		float cy = y + 26;
+		float cy = y + 25;
 		if (servers.isEmpty()) {
-			Render2D.round(g, x + 8, cy, w - 16, cardH, 6, Theme.alpha(0x10FFFFFF, alpha));
-			Render2D.text(g, "No saved servers yet", x + 16, cy + 6, Theme.alpha(Theme.SUBTEXT, alpha));
-			Render2D.text(g, "Add one with Manage ›", x + 16, cy + 17, Theme.alpha(Theme.MUTED, alpha));
+			Render2D.round(g, x + 7, cy, w - 14, cardH, 7, Theme.alpha(0x0EFFFFFF, alpha));
+			Render2D.text(g, HdFont.SEMIBOLD, "No saved servers yet", x + 15, cy + 7, 6.8f, Theme.alpha(Theme.SUBTEXT, alpha));
+			Render2D.text(g, HdFont.REGULAR, "Add one with Manage", x + 15, cy + 17, 5.8f, Theme.alpha(Theme.MUTED, alpha));
 			return;
 		}
 		for (int i = 0; i < servers.size(); i++) {
 			ServerData sd = servers.get(i);
-			boolean hovered = exitStart < 0 && mx >= x + 8 && mx < x + w - 8 && my >= cy && my < cy + cardH;
-			Anim.Value hvA = hoverValue("srv" + i);
-			float hv = hvA.target(hovered ? 1 : 0).get();
-			Render2D.round(g, x + 8, cy, w - 16, cardH, 6, Theme.alpha(Theme.lerp(0x10FFFFFF, 0x22FFFFFF, hv), alpha));
-			if (hv > 0.01f) Render2D.outline(g, x + 8, cy, w - 16, cardH, 6, Theme.alpha(Theme.accent1(), 0.6f * hv * alpha));
-			// avatar circle with initial
-			int col = Theme.wave(i / 3f);
-			Render2D.circle(g, x + 22, cy + 15, 8, Theme.alpha(col, 0.9f * alpha));
+			boolean hovered = exitStart < 0 && mx >= x + 7 && mx < x + w - 7 && my >= cy && my < cy + cardH;
+			float hv = hoverValue("srv" + i).target(hovered ? 1 : 0).get();
+			Render2D.round(g, x + 7, cy, w - 14, cardH, 7, Theme.alpha(Theme.lerp(0x0E8CB8FF, 0x1E8CB8FF, hv), alpha));
+			Render2D.outline(g, x + 7, cy, w - 14, cardH, 7, Theme.alpha(Theme.lerp(0x148CB8FF, Theme.accent1(), hv * 0.8f), alpha));
+			int col = Theme.accent(i / 3f);
+			Render2D.roundGradient(g, x + 12, cy + 5, 18, 18, 5, Theme.alpha(Theme.accent1(), alpha), Theme.alpha(Theme.lerp(col, Theme.accent2(), 0.5f), alpha));
 			String initial = sd.name == null || sd.name.isEmpty() ? "?" : sd.name.substring(0, 1).toUpperCase();
-			Render2D.textCentered(g, initial, x + 22.5f, cy + 11, Theme.alpha(0xFFFFFFFF, alpha));
-			Render2D.text(g, Render2D.trim(sd.name, w - 90), x + 36, cy + 6, Theme.alpha(Theme.TEXT, alpha));
-			Render2D.text(g, Render2D.trim(sd.ip, w - 90), x + 36, cy + 17, Theme.alpha(Theme.MUTED, alpha));
-			float jw = 34, jx = x + w - 16 - jw;
-			Render2D.roundGradient(g, jx, cy + 8, jw, 14, 3, Theme.alpha(Theme.accent1(), (0.35f + 0.5f * hv) * alpha), Theme.alpha(Theme.accent2(), (0.35f + 0.5f * hv) * alpha));
-			Render2D.textCentered(g, "JOIN", jx + jw / 2f, cy + 11, Theme.alpha(Theme.TEXT, alpha));
+			Render2D.textCentered(g, HdFont.BOLD, initial, x + 21, cy + 14 - HdFont.BOLD.capHeight(7.4f) / 2f, 7.4f, Theme.alpha(0xFFFFFFFF, alpha));
+			Render2D.text(g, HdFont.SEMIBOLD, Render2D.trim(HdFont.SEMIBOLD, sd.name, 6.8f, w - 86), x + 35, cy + 7.5f, 6.8f, Theme.alpha(Theme.TEXT, alpha));
+			Render2D.text(g, HdFont.REGULAR, Render2D.trim(HdFont.REGULAR, sd.ip, 5.8f, w - 86), x + 35, cy + 17.2f, 5.8f, Theme.alpha(Theme.MUTED, alpha));
+			float jw = 32, jx = x + w - 13 - jw;
+			Render2D.roundGradient(g, jx, cy + 8, jw, 12, 6, Theme.alpha(Theme.accent1(), (0.55f + 0.45f * hv) * alpha), Theme.alpha(Theme.accent2(), (0.45f + 0.55f * hv) * alpha));
+			Render2D.textCentered(g, HdFont.BOLD, "JOIN", jx + jw / 2f, cy + 14 - HdFont.BOLD.capHeight(5.6f) / 2f, 5.6f, Theme.alpha(0xFFFFFFFF, alpha));
 			final ServerData target = sd;
-			regions.add(new Region(x + 8, cy, w - 16, cardH, () -> runWithTransition(() -> {
+			regions.add(new Region(x + 7, cy, w - 14, cardH, () -> runWithTransition(() -> {
 				ConnectScreen.startConnecting(this, minecraft, ServerAddress.parseString(target.ip), target, false, null);
 			}, false)));
-			cy += cardH + 5;
+			cy += cardH + 4;
 		}
 	}
 

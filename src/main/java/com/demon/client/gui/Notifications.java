@@ -2,6 +2,7 @@ package com.demon.client.gui;
 
 import com.demon.client.module.Module;
 import com.demon.client.module.ModuleManager;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.util.Anim;
 import com.demon.client.util.Sounds;
@@ -62,24 +63,25 @@ public final class Notifications {
 			float in = Anim.easeOutBack(Anim.progress(age, 0, 0.45f));
 			float out = Anim.easeInCubic(Anim.progress(age, t.duration, t.duration + 0.4f));
 			float slide = in * (1 - out);
-			int textW = Math.max(Render2D.width(t.title), Render2D.width(t.text));
-			int w = Math.min(Math.max(130, textW + 34), sw - 20);
-			int h = 30;
+			float textW = Math.max(HdFont.SEMIBOLD.width(t.title, 7f), HdFont.REGULAR.width(t.text, 6.4f));
+			float w = Math.min(Math.max(120, textW + 34), sw - 20);
+			float h = 27;
 			float targetY = stackY - h;
 			if (t.y.peek() < 0) t.y.snap(targetY + 10);
 			float y = t.y.target(targetY).get();
-			float x = sw - 8 - w * slide - 8 * (1 - slide);
+			float x = sw - 6 - w * slide - 8 * (1 - slide);
 			float alpha = Anim.clamp01(slide * 1.4f);
-			Render2D.shadow(g, x, y, w, h, Theme.alpha(t.color, 0.25f * alpha));
-			Render2D.round(g, x, y, w, h, 6, Theme.alpha(0xEE0E0B16, alpha));
-			Render2D.outline(g, x, y, w, h, 6, Theme.alpha(Theme.BORDER, alpha));
-			Render2D.circle(g, x + 12, y + 11, 4, Theme.alpha(t.color, alpha));
-			Render2D.glow(g, x + 12, y + 11, 9, Theme.alpha(t.color, 0.5f * alpha));
-			Render2D.text(g, Render2D.trim(t.title, w - 30), x + 22, y + 6, Theme.alpha(Theme.TEXT, alpha));
-			Render2D.text(g, Render2D.trim(t.text, w - 30), x + 22, y + 16, Theme.alpha(Theme.SUBTEXT, alpha));
+			Render2D.shadow(g, x, y, w, h, Theme.alpha(t.color, 0.22f * alpha));
+			Ui.hud(g, x, y, w, h, alpha);
+			// icon bubble
+			Render2D.glow(g, x + 12, y + h / 2f, 10, Theme.alpha(t.color, 0.45f * alpha));
+			Render2D.circle(g, x + 12, y + h / 2f, 6, Theme.alpha(t.color, 0.22f * alpha));
+			Render2D.circle(g, x + 12, y + h / 2f, 2.6f, Theme.alpha(t.color, alpha));
+			Render2D.text(g, HdFont.SEMIBOLD, Render2D.trim(HdFont.SEMIBOLD, t.title, 7f, w - 32), x + 23, y + 6.5f, 7f, Theme.alpha(Theme.TEXT, alpha));
+			Render2D.text(g, HdFont.REGULAR, Render2D.trim(HdFont.REGULAR, t.text, 6.4f, w - 32), x + 23, y + 15.5f, 6.4f, Theme.alpha(Theme.SUBTEXT, alpha));
 			float progress = 1 - Anim.clamp01(age / t.duration);
-			Render2D.round(g, x + 6, y + h - 3, (w - 12) * progress, 1.5f, 1, Theme.alpha(t.color, 0.9f * alpha));
-			stackY -= (h + 5) * slide;
+			Render2D.capsule(g, x + 5, y + h - 2.2f, (w - 10) * progress, 1.2f, Theme.alpha(t.color, 0.9f * alpha));
+			stackY -= (h + 4) * slide;
 		}
 	}
 }

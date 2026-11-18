@@ -2,6 +2,8 @@ package com.demon.client.module.modules;
 
 import com.demon.client.module.Category;
 import com.demon.client.module.Module;
+import com.demon.client.gui.Ui;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.render.Render3D;
 import com.demon.client.scan.ChunkData;
@@ -193,22 +195,21 @@ public class EspModule extends Module {
 		if (mc.player == null) return;
 		int w = g.guiWidth(), h = g.guiHeight();
 		if (labels.on()) {
-			int gui = (int) Math.round(mc.getWindow().getGuiScale());
-			float scale = gui <= 1 ? 1f : 2f / gui;
+			float size = 5.8f;
 			for (Label l : labelList) {
 				float[] s = Render3D.toScreen(l.pos, w, h);
 				if (s == null) continue;
-				String text = l.count > 1 ? l.target.title + " x" + l.count : l.target.title;
-				int tw = Render2D.width(text);
-				g.pose().pushMatrix();
-				g.pose().translate(s[0], s[1]);
-				g.pose().scale(scale, scale);
-				float x = -(tw + 13) / 2f, y = -12;
-				Render2D.round(g, x, y, tw + 13, 11, 3, 0xD00E0B16);
-				Render2D.outline(g, x, y, tw + 13, 11, 3, Theme.alpha(l.target.color, 0.5f));
-				Render2D.circle(g, x + 5, y + 5.5f, 2, l.target.color);
-				Render2D.text(g, text, x + 9, y + 2, Theme.TEXT);
-				g.pose().popMatrix();
+				String name = l.target.title;
+				String count = l.count > 1 ? "x" + l.count : null;
+				float tw = HdFont.SEMIBOLD.width(name, size) + (count != null ? 3 + HdFont.BOLD.width(count, size) : 0);
+				float bw = tw + 11, bh = 9;
+				float x = s[0] - bw / 2f, y = s[1] - bh - 2;
+				Render2D.round(g, x, y, bw, bh, bh / 2f, 0xE0081020);
+				Render2D.outline(g, x, y, bw, bh, bh / 2f, Theme.alpha(l.target.color, 0.55f));
+				Render2D.circle(g, x + 4.5f, y + bh / 2f, 1.6f, l.target.color);
+				float tx = x + 7.5f;
+				tx += Render2D.text(g, HdFont.SEMIBOLD, name, tx, y + (bh - HdFont.SEMIBOLD.capHeight(size)) / 2f, size, Theme.TEXT) + 3;
+				if (count != null) Render2D.text(g, HdFont.BOLD, count, tx, y + (bh - HdFont.BOLD.capHeight(size)) / 2f, size, l.target.color);
 			}
 		}
 		if (counter.on()) drawCounter(g);
@@ -219,24 +220,24 @@ public class EspModule extends Module {
 		for (Target t : Target.VALUES) if (shownCounts[t.ordinal()] > 0) present.add(t);
 		present.sort((a, b) -> Integer.compare(shownCounts[b.ordinal()], shownCounts[a.ordinal()]));
 		if (present.size() > 5) present = present.subList(0, 5);
-		int x = 6, y = 30;
-		int rowH = 10;
-		int w = 112;
-		int hgt = 16 + Math.max(1, present.size()) * rowH + 4;
-		Render2D.shadow(g, x, y, w, hgt, 0x40000000);
-		Render2D.round(g, x, y, w, hgt, 6, 0xD00E0B16);
-		Render2D.round(g, x, y + 4, 2, 9, 1, Theme.wave(0.2f));
-		Render2D.text(g, "ESP", x + 7, y + 5, Theme.TEXT);
-		Render2D.textRight(g, lastTotal + " in " + range.display(), x + w - 6, y + 5, Theme.SUBTEXT);
-		int ry = y + 17;
+		float x = 5, y = 23;
+		float rowH = 8.5f, size = 6f;
+		float w = 96;
+		float hgt = 15 + Math.max(1, present.size()) * rowH + 3;
+		Ui.hud(g, x, y, w, hgt, 1f);
+		Ui.marker(g, x + 4, y + 4, 6.5f, 1f);
+		Render2D.text(g, HdFont.BOLD, "ESP", x + 8.5f, y + 5, 6.2f, Theme.TEXT);
+		Render2D.textRight(g, HdFont.MEDIUM, lastTotal + " in " + range.display(), x + w - 5, y + 5, 5.6f, Theme.SUBTEXT);
+		Render2D.rect(g, x + 5, y + 13, w - 10, 0.35f, 0x1F9CC4FF);
+		float ry = y + 16;
 		if (present.isEmpty()) {
-			Render2D.text(g, "Nothing in range", x + 7, ry, Theme.MUTED);
+			Render2D.text(g, HdFont.MEDIUM, "Nothing in range", x + 6, ry + 1, size, Theme.MUTED);
 			return;
 		}
 		for (Target t : present) {
-			Render2D.round(g, x + 7, ry + 1.5f, 5, 5, 2, t.color);
-			Render2D.text(g, Render2D.trim(t.title, 70), x + 16, ry, Theme.SUBTEXT);
-			Render2D.textRight(g, String.valueOf(shownCounts[t.ordinal()]), x + w - 6, ry, t.color);
+			Render2D.round(g, x + 6, ry + 1, 3.6f, 3.6f, 1.2f, t.color);
+			Render2D.text(g, HdFont.MEDIUM, Render2D.trim(HdFont.MEDIUM, t.title, size, 60), x + 12.5f, ry + 0.8f, size, Theme.SUBTEXT);
+			Render2D.textRight(g, HdFont.BOLD, String.valueOf(shownCounts[t.ordinal()]), x + w - 5, ry + 0.8f, size, t.color);
 			ry += rowH;
 		}
 	}

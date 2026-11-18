@@ -1,17 +1,17 @@
 package com.demon.client.util;
 
-/** Colour palette for the whole client. All colours are ARGB ints. */
+/** Colour palette for the whole client. All colours are ARGB ints. Default style: deep blue HD. */
 public final class Theme {
 	private Theme() {}
 
 	public enum Palette {
+		AZURE("Azure", 0xFF2F7BFF, 0xFF22D3EE),
+		ROYAL("Royal Blue", 0xFF4F46E5, 0xFF38BDF8),
+		ICE("Ice", 0xFF7DD3FC, 0xFFE0F2FE),
+		NEON("Neon Cyan", 0xFF00E5FF, 0xFF3B82F6),
 		DEMON("Demon", 0xFF8B5CF6, 0xFFEC4899),
 		INFERNO("Inferno", 0xFFFF6A00, 0xFFEE0979),
-		OCEAN("Ocean", 0xFF06B6D4, 0xFF6366F1),
-		TOXIC("Toxic", 0xFFA3E635, 0xFF10B981),
-		SAKURA("Sakura", 0xFFF9A8D4, 0xFFC084FC),
-		FROST("Frost", 0xFFE0F2FE, 0xFF38BDF8),
-		GOLD("Gold", 0xFFFDE68A, 0xFFF59E0B);
+		TOXIC("Toxic", 0xFFA3E635, 0xFF10B981);
 
 		public final String title;
 		public final int a, b;
@@ -28,21 +28,27 @@ public final class Theme {
 		}
 	}
 
-	public static Palette palette = Palette.DEMON;
+	public static Palette palette = Palette.AZURE;
 
-	public static final int BG = 0xFF0B0911;
-	public static final int PANEL = 0xFF110E19;
-	public static final int SIDEBAR = 0xFF0D0B14;
-	public static final int CARD = 0xFF181524;
-	public static final int CARD_HOVER = 0xFF221D33;
-	public static final int CARD_ACTIVE = 0xFF1F1A2E;
-	public static final int BORDER = 0x22FFFFFF;
-	public static final int TEXT = 0xFFF4F1FF;
-	public static final int SUBTEXT = 0xFFA39CBF;
-	public static final int MUTED = 0xFF625B7D;
-	public static final int TRACK = 0xFF2A2540;
+	// deep navy neutrals
+	public static final int BG = 0xFF050A14;
+	public static final int PANEL = 0xFF0A1222;
+	public static final int PANEL_TOP = 0xFF0E1830;
+	public static final int SIDEBAR = 0xFF070D19;
+	public static final int CARD = 0xFF0F1A2E;
+	public static final int CARD_HOVER = 0xFF15243F;
+	public static final int CARD_ACTIVE = 0xFF132442;
+	public static final int BORDER = 0x1F9CC4FF;
+	public static final int HIGHLIGHT = 0x14FFFFFF;
+	public static final int TEXT = 0xFFF1F6FF;
+	public static final int SUBTEXT = 0xFF93A6C6;
+	public static final int MUTED = 0xFF55688A;
+	public static final int TRACK = 0xFF1B2A45;
 	public static final int SUCCESS = 0xFF34D399;
-	public static final int DANGER = 0xFFF87171;
+	public static final int DANGER = 0xFFFB7185;
+	public static final int WARNING = 0xFFFBBF24;
+	/** translucent HUD panel background */
+	public static final int HUD_BG = 0xD9081020;
 
 	public static int accent1() {
 		return palette.a;

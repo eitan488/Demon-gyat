@@ -139,6 +139,10 @@ public final class ChunkScanner {
 		}
 
 		if (ticks % 10 == 0) updateEntities(level);
+		// drop chunks the client no longer has (teleports don't always fire unload events)
+		if (ticks % 20 == 0) {
+			DATA.long2ObjectEntrySet().removeIf(e -> level.getChunkSource().getChunk(ChunkPos.getX(e.getLongKey()), ChunkPos.getZ(e.getLongKey()), ChunkStatus.FULL, false) == null);
+		}
 	}
 
 	private static void scan(LevelChunk chunk, long key) {

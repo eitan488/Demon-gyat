@@ -5,6 +5,7 @@ import com.demon.client.config.Config;
 import com.demon.client.module.Category;
 import com.demon.client.module.Module;
 import com.demon.client.module.ModuleManager;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.setting.BoolSetting;
 import com.demon.client.setting.EnumSetting;
@@ -29,10 +30,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
-/** The main mod menu. Immediate-mode style: layout and hit regions are rebuilt every frame. */
+/** The main mod menu (blue HD). Immediate-mode style: layout and hit regions are rebuilt every frame. */
 public class ClickGuiScreen extends Screen {
-	private static final int SIDEBAR = 112;
-	private static final int CARD_H = 36;
+	private static final float SIDEBAR = 116;
+	private static final float CARD_H = 34;
 	private static Category lastCategory = Category.HUNTING;
 
 	private final Screen parent;
@@ -53,8 +54,7 @@ public class ClickGuiScreen extends Screen {
 	private Object lastHover;
 	private String hint;
 
-	// transform used for the open/close zoom (for inverse-mapping the mouse)
-	private float zoom = 1, zoomCx, zoomCy;
+	private float zoom = 1, zoomCx, zoomCy, zoomDy;
 	private final List<Region> regions = new ArrayList<>();
 	private final List<float[]> ripples = new ArrayList<>();
 
@@ -97,11 +97,12 @@ public class ClickGuiScreen extends Screen {
 		float open = openAmount();
 		if (minecraft.level == null) {
 			MenuFx.background(g, width, height, 1f);
-			Render2D.rect(g, 0, 0, width, height, Theme.alpha(0x99000000, open));
+			Render2D.rect(g, 0, 0, width, height, Theme.alpha(0x8C02050C, open));
 		} else {
 			if (ModuleManager.ui.blur.on()) renderBlurredBackground(g);
-			Render2D.vGradient(g, 0, 0, width, height, Theme.alpha(0x99000000, open), Theme.alpha(0xCC05030A, open));
+			Render2D.vGradient(g, 0, 0, width, height, Theme.alpha(0x8C020812, open), Theme.alpha(0xCC01040A, open));
 		}
+		Render2D.glow(g, width / 2f, height / 2f, Math.max(width, height) * 0.45f, Theme.alpha(Theme.accent1(), 0.10f * open));
 	}
 
 	private float openAmount() {
@@ -120,39 +121,38 @@ public class ClickGuiScreen extends Screen {
 		regions.clear();
 		hint = null;
 		float open = openAmount();
-		float pop = closing ? Anim.lerp(0.94f, 1f, open) : Anim.lerp(0.9f, 1f, Anim.easeOutBack(Anim.progress(t, openStart, openStart + 0.45f / Anim.speed)));
+		float pop = closing ? Anim.lerp(0.95f, 1f, open) : Anim.lerp(0.92f, 1f, Anim.easeOutBack(Anim.progress(t, openStart, openStart + 0.45f / Anim.speed)));
 
-		int pw = Math.min(480, width - 24), ph = Math.min(300, height - 24);
-		int px = (width - pw) / 2, py = (height - ph) / 2;
+		float pw = Math.min(470, width - 24), ph = Math.min(292, height - 24);
+		float px = Math.round((width - pw) / 2f), py = Math.round((height - ph) / 2f);
 		zoom = pop;
 		zoomCx = width / 2f;
 		zoomCy = height / 2f;
+		zoomDy = (1 - open) * 12;
 		double mx = toLocalX(mouseXi), my = toLocalY(mouseYi);
 
 		g.pose().pushMatrix();
-		g.pose().translate(zoomCx, zoomCy + (1 - open) * 14);
+		g.pose().translate(zoomCx, zoomCy + zoomDy);
 		g.pose().scale(pop, pop);
 		g.pose().translate(-zoomCx, -zoomCy);
 
-		// panel
-		float glowPulse = 0.55f + 0.15f * (float) Math.sin(t * 2.0);
-		Render2D.shadow(g, px - 6, py - 6, pw + 12, ph + 12, Theme.alpha(Theme.wave(0.3f), 0.32f * glowPulse * open));
-		Render2D.shadow(g, px, py + 4, pw, ph, Theme.alpha(0xFF000000, 0.6f * open));
-		Render2D.round(g, px, py, pw, ph, 12, Theme.alpha(0xF4100D18, open));
-		Render2D.round(g, px, py, SIDEBAR, ph, 12, Theme.alpha(0xFF0B0912, open));
-		Render2D.rect(g, px + SIDEBAR - 12, py, 12, ph, Theme.alpha(0xFF0B0912, open));
-		Render2D.rect(g, px + SIDEBAR, py + 10, 1, ph - 20, Theme.alpha(0x14FFFFFF, open));
-		g.enableScissor(px, py, px + pw, py + ph);
-		MenuFx.particles(g, px, py, pw, ph, open);
+		// window
+		float glowPulse = 0.5f + 0.15f * (float) Math.sin(t * 2.0);
+		Render2D.shadow(g, px - 8, py - 8, pw + 16, ph + 16, Theme.alpha(Theme.accent1(), 0.30f * glowPulse * open));
+		Ui.glass(g, px, py, pw, ph, 10, open);
+		// sidebar
+		Render2D.round(g, px, py, SIDEBAR, ph, 10, Theme.alpha(0x99040914, open));
+		Render2D.rect(g, px + SIDEBAR - 10, py + 0.4f, 10, ph - 0.8f, Theme.alpha(0x99040914, open));
+		Render2D.rect(g, px + SIDEBAR, py + 10, 0.35f, ph - 20, Theme.alpha(0x2A8CB8FF, open));
+		g.enableScissor((int) px, (int) py, (int) (px + pw), (int) (py + ph));
+		MenuFx.particles(g, px, py, pw, ph, open * 0.8f);
 		g.disableScissor();
-		Render2D.outline(g, px, py, pw, ph, 12, Theme.alpha(0x26FFFFFF, open));
-		// gradient top edge highlight
-		Render2D.roundGradient(g, px + 30, py, pw - 60, 1, 1, Theme.alpha(Theme.accent1(), 0), Theme.alpha(Theme.accent2(), 0.8f * open));
+		Render2D.hGradient(g, px + 40, py, pw - 80, 0.5f, Theme.alpha(Theme.accent1(), 0), Theme.alpha(Theme.accent2(), 0.9f * open));
 
 		drawSidebar(g, px, py, ph, mx, my, open);
-		drawContent(g, px + SIDEBAR + 10, py, pw - SIDEBAR - 20, ph, mx, my, open);
+		drawContent(g, px + SIDEBAR + 11, py, pw - SIDEBAR - 22, ph, mx, my, open);
 
-		// ripples
+		// click ripples
 		for (int i = ripples.size() - 1; i >= 0; i--) {
 			float[] r = ripples.get(i);
 			float age = (t - r[2]) / 0.55f;
@@ -161,7 +161,7 @@ public class ClickGuiScreen extends Screen {
 				continue;
 			}
 			float e = Anim.easeOutCubic(age);
-			Render2D.ring(g, r[0], r[1], 3 + 26 * e, Theme.alpha(Theme.wave(0.5f), (1 - age) * 0.7f));
+			Render2D.ring(g, r[0], r[1], 3 + 22 * e, 0.6f, Theme.alpha(Theme.accent2(), (1 - age) * 0.7f));
 		}
 		g.pose().popMatrix();
 
@@ -175,7 +175,7 @@ public class ClickGuiScreen extends Screen {
 	}
 
 	private double toLocalY(double y) {
-		return zoomCy + (y - zoomCy) / zoom;
+		return zoomCy + (y - zoomCy - zoomDy) / zoom;
 	}
 
 	private Object currentHoverKey(double mx, double my) {
@@ -183,42 +183,40 @@ public class ClickGuiScreen extends Screen {
 		return null;
 	}
 
-	private void drawSidebar(GuiGraphics g, int px, int py, int ph, double mx, double my, float open) {
+	private void drawSidebar(GuiGraphics g, float px, float py, float ph, double mx, double my, float open) {
 		// brand
-		Render2D.glow(g, px + 21, py + 21, 16, Theme.alpha(Theme.wave(0f), 0.35f * open));
-		Render2D.sprite(g, Render2D.LOGO_ICON, px + 12, py + 12, 18, 18, Theme.alpha(0xFFFFFFFF, open));
-		Render2D.logoSmall(g, px + 35, py + 13, 7.5f, open);
-		Render2D.text(g, "v" + DemonClient.VERSION, px + 35, py + 24, Theme.alpha(Theme.MUTED, open));
+		Render2D.glow(g, px + 20, py + 20, 15, Theme.alpha(Theme.accent1(), 0.45f * open));
+		Render2D.image(g, Render2D.LOGO_ICON, px + 11, py + 11, 18, 18, Theme.alpha(0xFFFFFFFF, open));
+		Render2D.logoSmall(g, px + 34, py + 12.5f, 6.6f, open);
+		Render2D.text(g, HdFont.MEDIUM, "v" + DemonClient.VERSION + "  ·  1.21.11", px + 34, py + 23.5f, 5.2f, Theme.alpha(Theme.MUTED, open));
 
-		// category tabs
 		Category[] cats = Category.values();
-		int tabX = px + 8, tabW = SIDEBAR - 16, tabH = 22, top = py + 50;
+		float tabX = px + 8, tabW = SIDEBAR - 16, tabH = 22, top = py + 52;
+		Ui.label(g, "MODULES", tabX + 3, top - 10, open);
 		int selIndex = searchActive() ? -1 : selected.ordinal();
 		if (selIndex >= 0) {
-			float target = top + selIndex * (tabH + 4);
+			float target = top + selIndex * (tabH + 3);
 			if (tabY.peek() < 0) tabY.snap(target);
 			float ty = tabY.target(target).get();
-			Render2D.roundGradient(g, tabX, ty, tabW, tabH, 6, Theme.alpha(Theme.accent1(), 0.30f * open), Theme.alpha(Theme.accent2(), 0.12f * open));
-			Render2D.round(g, tabX, ty + 5, 2.5f, tabH - 10, 1, Theme.alpha(Theme.wave(0.2f), open));
+			Render2D.roundGradient(g, tabX, ty, tabW, tabH, 6, Theme.alpha(Theme.accent1(), 0.32f * open), Theme.alpha(Theme.accent2(), 0.06f * open));
+			Render2D.outline(g, tabX, ty, tabW, tabH, 6, Theme.alpha(Theme.accent1(), 0.35f * open));
+			Render2D.capsule(g, tabX - 0.5f, ty + 6, 2, tabH - 12, Theme.alpha(Theme.accent2(), open));
 		}
-		Render2D.text(g, "MODULES", tabX + 4, top - 11, Theme.alpha(Theme.MUTED, open));
 		for (int i = 0; i < cats.length; i++) {
 			Category c = cats[i];
-			float y = top + i * (tabH + 4);
+			float y = top + i * (tabH + 3);
 			boolean hovered = mx >= tabX && mx < tabX + tabW && my >= y && my < y + tabH;
-			Anim.Value hv = anim("tab" + c, 14).target(hovered || i == selIndex ? 1 : 0);
-			float h = hv.get();
-			if (i != selIndex && h > 0.01f) Render2D.round(g, tabX, y, tabW, tabH, 6, Theme.alpha(0x14FFFFFF, h * open));
+			float h = anim("tab" + c, 14).target(hovered || i == selIndex ? 1 : 0).get();
+			if (i != selIndex && h > 0.01f) Render2D.round(g, tabX, y, tabW, tabH, 6, Theme.alpha(0x10FFFFFF, h * open));
 			int color = Theme.lerp(Theme.SUBTEXT, Theme.TEXT, h);
-			Render2D.icon(g, c.icon, tabX + 12 + h * 1.5f, y + 11, 9, Theme.alpha(i == selIndex ? Theme.wave(0.4f) : color, open));
-			Render2D.text(g, c.title, tabX + 22 + h * 1.5f, y + 7, Theme.alpha(color, open));
+			Render2D.icon(g, c.icon, tabX + 12 + h, y + tabH / 2f, 9, Theme.alpha(i == selIndex ? Theme.accent2() : color, open));
+			Render2D.textMid(g, i == selIndex ? HdFont.SEMIBOLD : HdFont.MEDIUM, c.title, tabX + 23 + h, y, tabH, 7.2f, Theme.alpha(color, open));
 			int enabled = 0;
 			for (Module m : ModuleManager.byCategory(c)) if (m.isEnabled()) enabled++;
 			if (enabled > 0) {
 				String n = String.valueOf(enabled);
-				int nw = Render2D.width(n) + 7;
-				Render2D.round(g, tabX + tabW - nw - 5, y + 6, nw, 10, 3, Theme.alpha(Theme.accent1(), 0.35f * open));
-				Render2D.text(g, n, tabX + tabW - nw - 1.5f, y + 7, Theme.alpha(Theme.TEXT, open));
+				float bw = HdFont.SEMIBOLD.width(n, 5.4f) + 6;
+				Ui.badge(g, n, tabX + tabW - bw - 5, y + (tabH - 8.1f) / 2f, 5.4f, Theme.alpha(Theme.accent1(), 0.45f * open), Theme.alpha(Theme.TEXT, open));
 			}
 			final Category cat = c;
 			regions.add(new Region(tabX, y, tabW, tabH, (b, x, yy) -> {
@@ -234,76 +232,79 @@ public class ClickGuiScreen extends Screen {
 
 		// user card
 		String name = minecraft.getUser().getName();
-		int uy = py + ph - 38;
-		Render2D.round(g, px + 8, uy, SIDEBAR - 16, 30, 6, Theme.alpha(0x10FFFFFF, open));
-		Render2D.circle(g, px + 22, uy + 15, 9, Theme.alpha(Theme.wave(0f), open));
-		Render2D.circle(g, px + 22, uy + 15, 7.5f, Theme.alpha(0xFF15111F, open));
-		Render2D.textCentered(g, name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(Locale.ROOT), px + 22.5f, uy + 11, Theme.alpha(Theme.TEXT, open));
-		Render2D.text(g, Render2D.trim(name, SIDEBAR - 52), px + 36, uy + 6, Theme.alpha(Theme.TEXT, open));
+		float uy = py + ph - 36;
+		Render2D.round(g, px + 8, uy, SIDEBAR - 16, 28, 7, Theme.alpha(0x0DFFFFFF, open));
+		Render2D.outline(g, px + 8, uy, SIDEBAR - 16, 28, 7, Theme.alpha(0x149CC4FF, open));
+		float ax = px + 21, ay = uy + 14;
+		Render2D.circle(g, ax, ay, 8.5f, Theme.alpha(Theme.accent1(), open));
+		Render2D.circle(g, ax, ay, 7.2f, Theme.alpha(0xFF0A1428, open));
+		Render2D.textCentered(g, HdFont.BOLD, name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(Locale.ROOT), ax, ay - HdFont.BOLD.capHeight(7f) / 2f, 7f, Theme.alpha(Theme.TEXT, open));
+		Render2D.text(g, HdFont.SEMIBOLD, Render2D.trim(HdFont.SEMIBOLD, name, 6.6f, SIDEBAR - 50), px + 34, uy + 7.5f, 6.6f, Theme.alpha(Theme.TEXT, open));
 		boolean inWorld = minecraft.level != null;
-		Render2D.circle(g, px + 38, uy + 20, 2, Theme.alpha(inWorld ? Theme.SUCCESS : Theme.accent2(), open));
-		Render2D.text(g, inWorld ? (minecraft.isSingleplayer() ? "Singleplayer" : "Online") : "Main menu", px + 43, uy + 16, Theme.alpha(Theme.MUTED, open));
+		Render2D.circle(g, px + 36, uy + 19.7f, 1.6f, Theme.alpha(inWorld ? Theme.SUCCESS : Theme.accent2(), open));
+		Render2D.text(g, HdFont.MEDIUM, inWorld ? (minecraft.isSingleplayer() ? "Singleplayer" : "Online") : "Main menu", px + 40, uy + 17.6f, 5.4f, Theme.alpha(Theme.MUTED, open));
 	}
 
 	private boolean searchActive() {
 		return !search.isEmpty();
 	}
 
-	private void drawContent(GuiGraphics g, int cx, int py, int cw, int ph, double mx, double my, float open) {
-		// header
+	private void drawContent(GuiGraphics g, float cx, float py, float cw, float ph, double mx, double my, float open) {
 		String title = searchActive() ? "Search" : selected.title;
-		Render2D.scaledText(g, title, cx + 2, py + 13, 1.5f, Theme.alpha(Theme.TEXT, open), false);
+		Render2D.text(g, HdFont.SEMIBOLD, title, cx + 1, py + 14, 12f, Theme.alpha(Theme.TEXT, open));
 		List<Module> mods = filtered();
-		Render2D.text(g, mods.size() + (mods.size() == 1 ? " module" : " modules"), cx + 3 + Render2D.width(title) * 1.5f + 6, py + 18, Theme.alpha(Theme.MUTED, open));
+		float tw = HdFont.SEMIBOLD.width(title, 12f);
+		Render2D.text(g, HdFont.MEDIUM, mods.size() + (mods.size() == 1 ? " module" : " modules"), cx + tw + 7, py + 17.6f, 5.8f, Theme.alpha(Theme.MUTED, open));
 
 		// search box
-		int sw = 118, sh = 17, sx = cx + cw - sw, sy = py + 11;
-		Anim.Value focus = anim("searchFocus", 14).target(searchFocused ? 1 : 0);
-		float f = focus.get();
-		Render2D.round(g, sx, sy, sw, sh, 6, Theme.alpha(Theme.lerp(0xFF16131F, 0xFF1D1829, f), open));
-		Render2D.outline(g, sx, sy, sw, sh, 6, Theme.alpha(Theme.lerp(0x18FFFFFF, Theme.accent1(), f), open));
-		Render2D.ring(g, sx + 10, sy + 8, 3.5f, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.accent1(), f), open));
-		Render2D.line(g, sx + 12.5f, sy + 10.5f, sx + 15, sy + 13, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.accent1(), f), open));
+		float sw = 116, sh = 16, sx = cx + cw - sw, sy = py + 11;
+		float f = anim("searchFocus", 14).target(searchFocused ? 1 : 0).get();
+		Render2D.round(g, sx, sy, sw, sh, 8, Theme.alpha(Theme.lerp(0xFF0C1528, 0xFF101E38, f), open));
+		Render2D.outline(g, sx, sy, sw, sh, 8, Theme.alpha(Theme.lerp(0x229CC4FF, Theme.accent1(), f), open));
+		Render2D.icon(g, "icon_search", sx + 9, sy + sh / 2f, 7, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.accent2(), f), open));
 		boolean caret = searchFocused && (Anim.time() * 2 % 2) < 1.2f;
-		if (search.isEmpty() && !searchFocused) Render2D.text(g, "Search modules…", sx + 19, sy + 5, Theme.alpha(Theme.MUTED, open));
-		else Render2D.text(g, Render2D.trim(search, sw - 28) + (caret ? "_" : ""), sx + 19, sy + 5, Theme.alpha(Theme.TEXT, open));
+		if (search.isEmpty() && !searchFocused) {
+			Render2D.textMid(g, HdFont.MEDIUM, "Search modules…", sx + 16, sy, sh, 6.2f, Theme.alpha(Theme.MUTED, open));
+		} else {
+			String shown = Render2D.trim(HdFont.MEDIUM, search, 6.2f, sw - 26);
+			Render2D.textMid(g, HdFont.MEDIUM, shown, sx + 16, sy, sh, 6.2f, Theme.alpha(Theme.TEXT, open));
+			if (caret) Render2D.rect(g, sx + 16.5f + HdFont.MEDIUM.width(shown, 6.2f), sy + 4.5f, 0.5f, sh - 9, Theme.alpha(Theme.accent2(), open));
+		}
 		regions.add(new Region(sx, sy, sw, sh, (b, x, y) -> {
 			searchFocused = true;
 			Sounds.click();
 		}));
 
-		// list area
-		int listTop = py + 38, listBottom = py + ph - 22;
-		int areaH = listBottom - listTop;
+		// list
+		float listTop = py + 36, listBottom = py + ph - 20;
+		float areaH = listBottom - listTop;
 		float sc = scroll.target(scrollTarget).get();
-		g.enableScissor(cx - 4, listTop, cx + cw + 4, listBottom);
+		g.enableScissor((int) (cx - 6), (int) listTop, (int) (cx + cw + 6), (int) listBottom);
 		float y = listTop + 2 - sc;
 		float contentH = 0;
 		for (Module m : mods) {
 			float h = drawModule(g, m, cx, y, cw, mx, my, open, listTop, listBottom);
-			y += h + 6;
-			contentH += h + 6;
+			y += h + 5;
+			contentH += h + 5;
 		}
 		if (mods.isEmpty()) {
-			Render2D.textCentered(g, "No modules match \"" + search + "\"", cx + cw / 2f, listTop + 30, Theme.alpha(Theme.MUTED, open));
+			Render2D.textCentered(g, HdFont.MEDIUM, "No modules match \"" + search + "\"", cx + cw / 2f, listTop + 30, 6.6f, Theme.alpha(Theme.MUTED, open));
 		}
 		g.disableScissor();
 		maxScroll = Math.max(0, contentH - areaH + 4);
 		scrollTarget = Anim.clamp(scrollTarget, 0, maxScroll);
-
-		// scrollbar
 		if (maxScroll > 0) {
 			float barH = Math.max(18, areaH * areaH / (contentH + 4));
 			float barY = listTop + (areaH - barH) * (sc / maxScroll);
-			Render2D.round(g, cx + cw + 2, barY, 2.5f, barH, 1, Theme.alpha(Theme.wave(0.5f), 0.6f * open));
+			Render2D.capsule(g, cx + cw + 3.5f, barY, 1.8f, barH, Theme.alpha(Theme.accent1(), 0.7f * open));
 		}
-		// fade edges of list
-		Render2D.vGradient(g, cx - 4, listTop, cw + 8, 6, Theme.alpha(0xF4100D18, open), 0);
 
 		// footer hint
-		String foot = binding != null ? "Press a key to bind " + binding.name + " · ESC cancel · DEL unbind"
-			: hint != null ? hint : "LMB toggle · RMB settings · MMB bind · RShift close";
-		Render2D.text(g, Render2D.trim(foot, cw), cx + 2, py + ph - 15, Theme.alpha(binding != null ? Theme.wave(0.5f) : Theme.MUTED, open));
+		Render2D.rect(g, cx, py + ph - 18, cw, 0.35f, Theme.alpha(0x1F9CC4FF, open));
+		String foot = binding != null ? "Press a key to bind " + binding.name + "  ·  ESC cancel  ·  DEL unbind"
+			: hint != null ? hint : "Left click toggle  ·  Right click settings  ·  Middle click bind  ·  RShift close";
+		Render2D.text(g, HdFont.MEDIUM, Render2D.trim(HdFont.MEDIUM, foot, 5.8f, cw), cx + 1, py + ph - 11.5f, 5.8f,
+			Theme.alpha(binding != null ? Theme.accent2() : Theme.MUTED, open));
 	}
 
 	private List<Module> filtered() {
@@ -317,20 +318,16 @@ public class ClickGuiScreen extends Screen {
 
 	private float settingsHeight(Module m) {
 		float h = 4;
-		for (Setting<?> s : m.settings()) {
-			if (!s.isVisible()) continue;
-			h += rowHeight(s);
-		}
+		for (Setting<?> s : m.settings()) if (s.isVisible()) h += rowHeight(s);
 		return h + 4;
 	}
 
 	private static float rowHeight(Setting<?> s) {
-		return s instanceof NumberSetting ? 25 : 18;
+		return s instanceof NumberSetting ? 21 : 15;
 	}
 
-	private float drawModule(GuiGraphics g, Module m, float x, float y, float w, double mx, double my, float open, int clipTop, int clipBottom) {
-		Anim.Value exp = anim("exp" + m.name, 13).target(expanded.contains(m) ? 1 : 0);
-		float e = exp.get();
+	private float drawModule(GuiGraphics g, Module m, float x, float y, float w, double mx, double my, float open, float clipTop, float clipBottom) {
+		float e = anim("exp" + m.name, 13).target(expanded.contains(m) ? 1 : 0).get();
 		float sh = settingsHeight(m);
 		float h = CARD_H + sh * e;
 		if (y > clipBottom || y + h < clipTop) return h;
@@ -341,55 +338,49 @@ public class ClickGuiScreen extends Screen {
 		float on = m.guiToggle.target(m.isEnabled() || !m.toggleable() ? 1 : 0).get();
 		if (!m.toggleable()) on = 0.35f;
 
-		int bg = Theme.lerp(Theme.CARD, Theme.CARD_HOVER, hv);
-		if (hv > 0.01f) Render2D.shadow(g, x, y, w, h, Theme.alpha(Theme.accent1(), 0.12f * hv * open));
-		Render2D.round(g, x, y, w, h, 6, Theme.alpha(bg, open));
-		if (on > 0.01f) Render2D.roundGradient(g, x, y, w, CARD_H, 6, Theme.alpha(Theme.accent1(), 0.16f * on * open), Theme.alpha(Theme.accent2(), 0.0f));
-		Render2D.outline(g, x, y, w, h, 6, Theme.alpha(Theme.lerp(0x14FFFFFF, Theme.accent1(), on * 0.5f), open));
-		if (on > 0.01f) Render2D.round(g, x + 1, y + 9, 2.5f, CARD_H - 18, 1, Theme.alpha(Theme.wave(0.1f), on * open));
+		if (hv > 0.01f) Render2D.shadow(g, x, y, w, h, Theme.alpha(Theme.accent1(), 0.16f * hv * open));
+		Render2D.round(g, x, y, w, h, 7, Theme.alpha(Theme.lerp(Theme.CARD, Theme.CARD_HOVER, hv), open));
+		if (on > 0.01f) Render2D.roundGradient(g, x, y, w, CARD_H, 7, Theme.alpha(Theme.accent1(), 0.16f * on * open), Theme.alpha(Theme.accent2(), 0.0f));
+		Render2D.outline(g, x, y, w, h, 7, Theme.alpha(Theme.lerp(0x1A9CC4FF, Theme.accent1(), on * 0.55f + hv * 0.15f), open));
 
 		// icon tile
-		float ix = x + 9, iy = y + 7;
+		float ix = x + 7, iy = y + 6;
 		if (on > 0.01f) {
-			Render2D.glow(g, ix + 11, iy + 11, 16, Theme.alpha(Theme.accent1(), 0.35f * on * open));
+			Render2D.glow(g, ix + 11, iy + 11, 15, Theme.alpha(Theme.accent1(), 0.40f * on * open));
 			Render2D.roundGradient(g, ix, iy, 22, 22, 6, Theme.alpha(Theme.accent1(), on * open), Theme.alpha(Theme.accent2(), on * open));
 		}
-		if (on < 0.99f) Render2D.round(g, ix, iy, 22, 22, 6, Theme.alpha(0x16FFFFFF, (1 - on) * open));
-		Render2D.icon(g, m.icon(), ix + 11, iy + 11, 12, Theme.alpha(Theme.lerp(Theme.SUBTEXT, 0xFFFFFFFF, Math.max(on, hv * 0.5f)), open));
+		if (on < 0.99f) Render2D.round(g, ix, iy, 22, 22, 6, Theme.alpha(0x149CC4FF, (1 - on) * open));
+		Render2D.icon(g, m.icon(), ix + 11, iy + 11, 11, Theme.alpha(Theme.lerp(Theme.SUBTEXT, 0xFFFFFFFF, Math.max(on, hv * 0.5f)), open));
 
-		// texts
-		Render2D.text(g, m.name, x + 38 + hv * 1.5f, y + 8, Theme.alpha(Theme.TEXT, open));
-		Render2D.text(g, Render2D.trim(m.description, (int) w - 150), x + 38 + hv * 1.5f, y + 21, Theme.alpha(Theme.SUBTEXT, open));
+		Render2D.text(g, HdFont.SEMIBOLD, m.name, x + 36 + hv, y + 9.5f, 7.8f, Theme.alpha(Theme.TEXT, open));
+		Render2D.text(g, HdFont.REGULAR, Render2D.trim(HdFont.REGULAR, m.description, 6f, w - 140), x + 36 + hv, y + 20.5f, 6f, Theme.alpha(Theme.SUBTEXT, open));
 
 		// chevron
-		float chevX = x + w - 13, chevY = y + CARD_H / 2f;
-		g.pose().pushMatrix();
-		g.pose().translate(chevX, chevY);
-		g.pose().rotate(e * (float) Math.PI / 2f);
-		Render2D.text(g, "›", -2, -4.5f, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.TEXT, Math.max(hv, e)), open));
-		g.pose().popMatrix();
+		Render2D.icon(g, e > 0.5f ? "icon_chevron_down" : "icon_chevron_right", x + w - 11, y + CARD_H / 2f, 7,
+			Theme.alpha(Theme.lerp(Theme.MUTED, Theme.TEXT, Math.max(hv, e)), open));
 
-		// toggle switch
-		float tx = x + w - 52, ty = y + 11;
+		// switch
+		float tx = x + w - 46, ty = y + 10.5f;
 		if (m.toggleable()) {
-			drawSwitch(g, tx, ty, 26, 14, on, open);
+			Ui.toggle(g, tx, ty, 24, 13, m.guiToggle.peek(), open);
 		} else {
-			Render2D.round(g, tx - 14, ty + 1, 40, 12, 3, Theme.alpha(0x14FFFFFF, open));
-			Render2D.textCentered(g, "always", tx + 6, ty + 3, Theme.alpha(Theme.MUTED, open));
+			Ui.badge(g, "ALWAYS ON", tx - 18, ty + 1.5f, 5.2f, Theme.alpha(0x149CC4FF, open), Theme.alpha(Theme.MUTED, open));
 		}
 
 		// keybind chip
 		boolean isBinding = binding == m;
 		String key = isBinding ? "•••" : keyName(m.getKey());
-		int kw = Math.max(18, Render2D.width(key) + 8);
-		float kx = tx - (m.toggleable() ? 8 : 22) - kw;
+		float kw = Math.max(16, HdFont.SEMIBOLD.width(key, 5.6f) + 9);
+		float kx = tx - (m.toggleable() ? 6 : 24) - kw;
 		float pulse = isBinding ? 0.5f + 0.5f * (float) Math.sin(Anim.time() * 8) : 0;
-		Render2D.round(g, kx, ty + 1, kw, 12, 3, Theme.alpha(isBinding ? Theme.lerp(0xFF2A2540, Theme.accent1(), pulse) : 0x12FFFFFF, open));
-		Render2D.textCentered(g, key, kx + kw / 2f, ty + 3, Theme.alpha(isBinding ? Theme.TEXT : Theme.MUTED, open));
+		Render2D.round(g, kx, ty + 1.5f, kw, 10, 3.5f, Theme.alpha(isBinding ? Theme.lerp(Theme.TRACK, Theme.accent1(), pulse) : 0x0FFFFFFF, open));
+		Render2D.outline(g, kx, ty + 1.5f, kw, 10, 3.5f, Theme.alpha(0x1A9CC4FF, open));
+		Render2D.textCentered(g, HdFont.SEMIBOLD, key, kx + kw / 2f, ty + 1.5f + (10 - HdFont.SEMIBOLD.capHeight(5.6f)) / 2f, 5.6f,
+			Theme.alpha(isBinding ? Theme.TEXT : Theme.SUBTEXT, open));
 
 		if (inClip) {
-			regions.add(new Region(kx, ty + 1, kw, 12, (b, mxx, myy) -> startBinding(m)));
-			if (m.toggleable()) regions.add(new Region(tx - 2, ty - 2, 30, 18, (b, mxx, myy) -> {
+			regions.add(new Region(kx, ty + 1.5f, kw, 10, (b, mxx, myy) -> startBinding(m)));
+			if (m.toggleable()) regions.add(new Region(tx - 2, ty - 2, 28, 17, (b, mxx, myy) -> {
 				if (b == 0) toggle(m);
 				else if (b == 1) expand(m);
 			}));
@@ -403,13 +394,12 @@ public class ClickGuiScreen extends Screen {
 			if (hovered) hint = m.description;
 		}
 
-		// settings
 		if (e > 0.01f) {
 			int sy0 = (int) Math.max(clipTop, y + CARD_H);
 			int sy1 = (int) Math.min(clipBottom, y + h);
 			if (sy1 > sy0) {
 				g.enableScissor((int) x, sy0, (int) (x + w), sy1);
-				Render2D.rect(g, (int) x + 10, (int) (y + CARD_H), (int) w - 20, 1, Theme.alpha(0x12FFFFFF, open * e));
+				Render2D.rect(g, x + 9, y + CARD_H, w - 18, 0.35f, Theme.alpha(0x1F9CC4FF, open * e));
 				float ry = y + CARD_H + 4;
 				for (Setting<?> s : m.settings()) {
 					if (!s.isVisible()) continue;
@@ -424,40 +414,34 @@ public class ClickGuiScreen extends Screen {
 		return h;
 	}
 
-	private void drawSwitch(GuiGraphics g, float x, float y, float w, float h, float on, float alpha) {
-		int track = Theme.lerp(Theme.TRACK, Theme.accent1(), on);
-		if (on > 0.5f) Render2D.roundGradient(g, x, y, w, h, 6, Theme.alpha(Theme.accent1(), alpha), Theme.alpha(Theme.accent2(), alpha));
-		else Render2D.round(g, x, y, w, h, 6, Theme.alpha(track, alpha));
-		float knobX = x + h / 2f + (w - h) * Anim.easeOutBack(on);
-		if (on > 0.05f) Render2D.glow(g, knobX, y + h / 2f, h * 0.9f, Theme.alpha(0xFFFFFFFF, 0.25f * on * alpha));
-		Render2D.circle(g, knobX, y + h / 2f, h / 2f - 2, Theme.alpha(0xFFFFFFFF, alpha));
-	}
-
 	private void drawSetting(GuiGraphics g, Setting<?> s, float x, float y, float w, float h, double mx, double my, float alpha, boolean interactive) {
 		boolean hovered = interactive && mx >= x - 4 && mx < x + w + 4 && my >= y && my < y + h;
 		float hv = anim(s, 16).target(hovered ? 1 : 0).get();
-		if (hv > 0.01f) Render2D.round(g, x - 5, y + 1, w + 10, h - 2, 3, Theme.alpha(0x0CFFFFFF, hv * alpha));
-		Render2D.text(g, s.name, x + hv, y + 5, Theme.alpha(Theme.lerp(Theme.SUBTEXT, Theme.TEXT, hv), alpha));
+		if (hv > 0.01f) Render2D.round(g, x - 5, y + 1, w + 10, h - 2, 4, Theme.alpha(0x0E9CC4FF, hv * alpha));
+		float labelSize = 6.4f;
+		float rowMid = s instanceof NumberSetting ? 9 : h;
+		Render2D.textMid(g, HdFont.MEDIUM, s.name, x + hv, y, rowMid, labelSize, Theme.alpha(Theme.lerp(Theme.SUBTEXT, Theme.TEXT, hv), alpha));
 		if (hovered) hint = s.description;
 
 		if (s instanceof BoolSetting b) {
 			float on = anim(b.name + "#" + System.identityHashCode(b), 16).target(b.on() ? 1 : 0).get();
-			drawSwitch(g, x + w - 20, y + 4, 20, 10, on, alpha);
+			Ui.toggle(g, x + w - 19, y + (h - 10) / 2f, 19, 10, on, alpha);
 			if (interactive) regions.add(new Region(x - 4, y, w + 8, h, (btn, mxx, myy) -> {
 				b.toggle();
 				Sounds.toggle(b.on());
 			}));
 		} else if (s instanceof NumberSetting n) {
 			String val = n.display();
-			Render2D.textRight(g, val, x + w, y + 5, Theme.alpha(Theme.wave(n.fraction()), alpha));
-			float trackY = y + 16;
+			Render2D.textRight(g, HdFont.BOLD, val, x + w, y + (9 - HdFont.BOLD.capHeight(6.2f)) / 2f, 6.2f, Theme.alpha(Theme.accent2(), alpha));
+			float trackY = y + 13.5f;
 			float frac = anim(n.name + "#v" + System.identityHashCode(n), 20).target(n.fraction()).get();
-			Render2D.round(g, x, trackY, w, 3, 1, Theme.alpha(Theme.TRACK, alpha));
-			Render2D.roundGradient(g, x, trackY, Math.max(3, w * frac), 3, 1, Theme.alpha(Theme.accent1(), alpha), Theme.alpha(Theme.accent2(), alpha));
+			Render2D.capsule(g, x, trackY, w, 2.6f, Theme.alpha(Theme.TRACK, alpha));
+			Render2D.roundGradient(g, x, trackY, Math.max(2.6f, w * frac), 2.6f, 1.3f, Theme.alpha(Theme.accent1(), alpha), Theme.alpha(Theme.accent2(), alpha));
 			float kx = x + w * frac;
 			boolean active = dragging == n;
-			Render2D.glow(g, kx, trackY + 1.5f, active ? 9 : 6, Theme.alpha(Theme.accent2(), (active ? 0.6f : 0.3f) * alpha));
-			Render2D.circle(g, kx, trackY + 1.5f, active ? 4f : 3.5f, Theme.alpha(0xFFFFFFFF, alpha));
+			Render2D.glow(g, kx, trackY + 1.3f, active ? 9 : 6, Theme.alpha(Theme.accent2(), (active ? 0.7f : 0.35f) * alpha));
+			Render2D.circle(g, kx, trackY + 1.3f, active ? 3.8f : 3.3f, Theme.alpha(0xFFFFFFFF, alpha));
+			Render2D.circle(g, kx, trackY + 1.3f, 1.3f, Theme.alpha(Theme.accent1(), alpha));
 			if (interactive) regions.add(new Region(x - 4, y, w + 8, h, (btn, mxx, myy) -> {
 				dragging = n;
 				dragX = x;
@@ -466,13 +450,14 @@ public class ClickGuiScreen extends Screen {
 			}));
 		} else if (s instanceof EnumSetting<?> en) {
 			String val = en.get().toString();
-			int vw = Render2D.width(val);
-			float pillW = vw + 22;
-			float pillX = x + w - pillW;
-			Render2D.round(g, pillX, y + 3, pillW, 12, 3, Theme.alpha(Theme.lerp(0x16FFFFFF, Theme.accent1(), 0.25f + 0.2f * hv), alpha));
-			Render2D.text(g, "‹", pillX + 4, y + 5, Theme.alpha(Theme.MUTED, alpha));
-			Render2D.text(g, "›", pillX + pillW - 7, y + 5, Theme.alpha(Theme.MUTED, alpha));
-			Render2D.text(g, val, pillX + 11, y + 5, Theme.alpha(Theme.TEXT, alpha));
+			float vw = HdFont.SEMIBOLD.width(val, 6f);
+			float pillW = vw + 22, pillH = 11;
+			float pillX = x + w - pillW, pillY = y + (h - pillH) / 2f;
+			Render2D.round(g, pillX, pillY, pillW, pillH, 5.5f, Theme.alpha(Theme.lerp(0x149CC4FF, Theme.accent1(), 0.18f + 0.22f * hv), alpha));
+			Render2D.outline(g, pillX, pillY, pillW, pillH, 5.5f, Theme.alpha(Theme.lerp(0x229CC4FF, Theme.accent1(), hv), alpha));
+			Render2D.textMid(g, HdFont.SEMIBOLD, "‹", pillX + 4, pillY, pillH, 6.6f, Theme.alpha(Theme.MUTED, alpha));
+			Render2D.textMid(g, HdFont.SEMIBOLD, "›", pillX + pillW - 7.5f, pillY, pillH, 6.6f, Theme.alpha(Theme.MUTED, alpha));
+			Render2D.textMid(g, HdFont.SEMIBOLD, val, pillX + 11, pillY, pillH, 6f, Theme.alpha(Theme.TEXT, alpha));
 			if (interactive) regions.add(new Region(x - 4, y, w + 8, h, (btn, mxx, myy) -> {
 				en.cycle(btn == 1 ? -1 : 1);
 				Sounds.tick(1.2f + 0.1f * en.get().ordinal());
@@ -605,7 +590,6 @@ public class ClickGuiScreen extends Screen {
 			return true;
 		}
 		if (!searchFocused && binding == null && event.isAllowedChatCharacter() && !Character.isWhitespace(event.codepoint())) {
-			// typing anywhere starts a search
 			searchFocused = true;
 			search += event.codepointAsString();
 			scrollTarget = 0;

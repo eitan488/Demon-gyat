@@ -6,6 +6,8 @@ import com.demon.client.gui.Notifications;
 import com.demon.client.module.Category;
 import com.demon.client.module.Module;
 import com.demon.client.module.ModuleManager;
+import com.demon.client.gui.Ui;
+import com.demon.client.render.HdFont;
 import com.demon.client.render.Render2D;
 import com.demon.client.render.Render3D;
 import com.demon.client.scan.ChunkData;
@@ -71,7 +73,7 @@ public class ChunkFinderModule extends Module {
 	}
 
 	public enum Kind {
-		STASH("STASH", 0xFFFF4FD8), BASE("BASE", 0xFFFFB547), FARM("FARM", 0xFF22D3EE), MIXED("BASE + FARM", 0xFFA78BFA);
+		STASH("STASH", 0xFF38BDF8), BASE("BASE", 0xFF818CF8), FARM("FARM", 0xFF2DD4BF), MIXED("BASE + FARM", 0xFFC4B5FD);
 
 		public final String title;
 		public final int color;
@@ -97,6 +99,9 @@ public class ChunkFinderModule extends Module {
 	public final BoolSetting saveLog = add(new BoolSetting("Save Log", "Append finds to config/demon/found-chunks.txt", true));
 
 	private final List<ChunkData> sus = new ArrayList<>();
+	/** Chunks already announced in this world, so coming back to an area doesn't repeat the alert. */
+	private final it.unimi.dsi.fastutil.longs.LongOpenHashSet announcedKeys = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+	private Object announcedLevel;
 	private int timer;
 
 	public ChunkFinderModule() {
@@ -152,13 +157,17 @@ public class ChunkFinderModule extends Module {
 		if (mc.player == null) return;
 		if (timer++ % 5 != 0) return;
 		sus.clear();
+		if (announcedLevel != mc.level) {
+			announcedLevel = mc.level;
+			announcedKeys.clear();
+		}
 		double px = mc.player.getX(), pz = mc.player.getZ();
 		for (ChunkData d : ChunkScanner.chunks()) {
 			if (!isSus(d)) continue;
 			sus.add(d);
 			if (!d.announced) {
 				d.announced = true;
-				announce(d);
+				if (announcedKeys.add(net.minecraft.world.level.ChunkPos.asLong(d.x, d.z))) announce(d);
 			}
 		}
 		sus.sort((a, b) -> Double.compare(a.distanceSq(px, pz), b.distanceSq(px, pz)));
@@ -178,7 +187,7 @@ public class ChunkFinderModule extends Module {
 			Sounds.notify(true);
 		}
 		if (chat.on() && mc.player != null) {
-			MutableComponent msg = Component.literal("[Demon] ").withStyle(ChatFormatting.LIGHT_PURPLE)
+			MutableComponent msg = Component.literal("[Demon] ").withColor(0x38BDF8)
 				.append(Component.literal(kind.title).withColor(kind.color & 0xFFFFFF))
 				.append(Component.literal(" at ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(bx + ", " + bz).withStyle(ChatFormatting.WHITE))
@@ -187,6 +196,7 @@ public class ChunkFinderModule extends Module {
 			mc.player.displayClientMessage(msg, false);
 		}
 		if (saveLog.on()) writeLog(d, kind, summary.toString());
+		if (ModuleManager.autoRtp != null) ModuleManager.autoRtp.onFind(d, kind, summary.toString());
 	}
 
 	private void writeLog(ChunkData d, Kind kind, String summary) {
@@ -280,24 +290,25 @@ public class ChunkFinderModule extends Module {
 
 	private record Card(ChunkData data, float x, float y, float scale, int dist, boolean compact, float w, float h) {}
 
+	private static final float CARD_W = 104;
+
 	private void drawCards(GuiGraphics g) {
 		int sw = g.guiWidth(), sh = g.guiHeight();
 		Vec3 cam = Render3D.cameraPos();
-		float pixel = pixelScale();
 		List<ChunkData> nearFirst = new ArrayList<>(sus.subList(0, Math.min(sus.size(), 32)));
 		nearFirst.sort((a, b) -> Double.compare(a.distanceSq(cam.x, cam.z), b.distanceSq(cam.x, cam.z)));
 		List<Card> placed = new ArrayList<>();
 		for (ChunkData d : nearFirst) {
-			Vec3 anchor = new Vec3(d.centerX(), Math.max(d.maxY + 3.0, d.minY + 5.0), d.centerZ());
+			Vec3 anchor = anchor(d);
 			float[] s = Render3D.toScreen(anchor, sw, sh);
 			if (s == null || s[0] < -100 || s[0] > sw + 100 || s[1] < -100 || s[1] > sh + 150) continue;
 			int dist = (int) Math.sqrt(anchor.distanceToSqr(cam));
 			boolean compact = dist > 112;
-			float scale = pixel;
+			// shrink with distance in steps of 0.1 so text stays pixel-sharp
+			float scale = Math.round(Anim.clamp((float) (0.85 - dist / 450.0), 0.6f, 0.85f) * 20f) / 20f;
 			float w = CARD_W * scale;
 			float h = cardHeight(d, compact) * scale;
-			// card sits above the anchor; push it up while it overlaps a nearer card
-			float top = s[1] - h - 6 * scale;
+			float top = s[1] - h - 5 * scale;
 			for (int iter = 0; iter < 8; iter++) {
 				boolean moved = false;
 				for (Card c : placed) {
@@ -311,26 +322,21 @@ public class ChunkFinderModule extends Module {
 			}
 			placed.add(new Card(d, s[0], top, scale, dist, compact, w, h));
 		}
-		// draw far cards first so the nearest end up on top
 		for (int i = placed.size() - 1; i >= 0; i--) {
 			Card c = placed.get(i);
-			float[] s = Render3D.toScreen(new Vec3(c.data.centerX(), Math.max(c.data.maxY + 3.0, c.data.minY + 5.0), c.data.centerZ()), sw, sh);
+			float[] s = Render3D.toScreen(anchor(c.data), sw, sh);
 			drawCard(g, c, s == null ? c.y + c.h : s[1]);
 		}
 	}
 
-	private static final int CARD_W = 124;
-
-	/** Scale that maps one font pixel to exactly two screen pixels so card text stays crisp. */
-	private float pixelScale() {
-		int gui = (int) Math.round(mc.getWindow().getGuiScale());
-		return gui <= 1 ? 1f : 2f / gui;
+	private static Vec3 anchor(ChunkData d) {
+		return new Vec3(d.centerX(), Math.max(d.maxY + 3.0, d.minY + 5.0), d.centerZ());
 	}
 
 	private int cardHeight(ChunkData d, boolean compact) {
-		if (compact) return 30;
+		if (compact) return 25;
 		int lines = Math.min(cardLines.asInt(), d.sortedTargets().size());
-		return 36 + lines * 10 + (d.sortedTargets().size() > lines ? 9 : 2);
+		return 31 + lines * 8 + (d.sortedTargets().size() > lines ? 8 : 2);
 	}
 
 	private void drawCard(GuiGraphics g, Card card, float anchorY) {
@@ -339,68 +345,74 @@ public class ChunkFinderModule extends Module {
 		float a = d.appear.peek();
 		List<Target> targets = d.sortedTargets();
 		int lines = card.compact ? 0 : Math.min(cardLines.asInt(), targets.size());
-		int w = CARD_W;
-		int h = cardHeight(d, card.compact);
-		// pointer line from the card down to the chunk
-		Render2D.line(g, card.x, card.y + card.h, card.x, anchorY, Theme.alpha(kind.color, 0.55f * a));
-		Render2D.circle(g, card.x, anchorY, 2.5f, Theme.alpha(kind.color, a));
+		float w = CARD_W;
+		float h = cardHeight(d, card.compact);
+		Render2D.line(g, card.x, card.y + card.h, card.x, anchorY, Theme.alpha(kind.color, 0.6f * a));
+		Render2D.glow(g, card.x, anchorY, 6, Theme.alpha(kind.color, 0.6f * a));
+		Render2D.circle(g, card.x, anchorY, 1.8f, Theme.alpha(kind.color, a));
 		g.pose().pushMatrix();
 		g.pose().translate(card.x, card.y);
 		g.pose().scale(card.scale, card.scale);
 		float x = -w / 2f, y = 0;
-		Render2D.shadow(g, x, y, w, h, Theme.alpha(kind.color, 0.30f * a));
-		Render2D.round(g, x, y, w, h, 6, Theme.alpha(0xEA0D0A14, a));
-		Render2D.outline(g, x, y, w, h, 6, Theme.alpha(kind.color, 0.45f * a));
+		Render2D.shadow(g, x, y, w, h, Theme.alpha(kind.color, 0.25f * a));
+		Render2D.round(g, x, y, w, h, 5, Theme.alpha(0xEE071021, a));
+		Render2D.round(g, x, y, w, 18, 5, Theme.alpha(kind.color, 0.10f * a));
+		Render2D.outline(g, x, y, w, h, 5, Theme.alpha(kind.color, 0.5f * a));
 		// header
-		Render2D.round(g, x + 6, y + 5, Render2D.width(kind.title) + 10, 11, 3, Theme.alpha(kind.color, 0.25f * a));
-		Render2D.text(g, kind.title, x + 11, y + 7, Theme.alpha(kind.color, a));
-		Render2D.textRight(g, (int) score(d) + " pts", x + w - 7, y + 7, Theme.alpha(Theme.TEXT, a));
+		Ui.badge(g, kind.title, x + 5, y + 4.5f, 5.4f, Theme.alpha(kind.color, 0.28f * a), Theme.alpha(Theme.brighten(kind.color, 0.35f), a));
+		Render2D.textRight(g, HdFont.BOLD, (int) score(d) + " pts", x + w - 6, y + 6.5f, 6f, Theme.alpha(Theme.TEXT, a));
 		String where = card.dist + "m  \u00B7  " + (int) d.centerX() + ", " + (int) d.centerZ();
-		Render2D.text(g, where, x + 7, y + 19, Theme.alpha(Theme.SUBTEXT, a));
+		Render2D.text(g, HdFont.MEDIUM, where, x + 6, y + 18.5f, 5.6f, Theme.alpha(Theme.SUBTEXT, a));
 		if (card.compact) {
 			g.pose().popMatrix();
 			return;
 		}
 		// composition bar
 		int total = Math.max(1, d.total());
-		float bx = x + 7, bw = w - 14, cx = bx;
+		float bx = x + 6, bw = w - 12, cx = bx;
+		Render2D.capsule(g, bx, y + 26, bw, 1.6f, Theme.alpha(Theme.TRACK, a));
+		g.enableScissor((int) Math.floor(x + 6), (int) (y + 25), (int) Math.ceil(x + w - 6), (int) (y + 29));
 		for (Target t : targets) {
 			float seg = bw * d.count(t) / total;
-			Render2D.rect(g, Math.round(cx), (int) (y + 30), Math.max(1, Math.round(cx + seg) - Math.round(cx)), 2, Theme.alpha(t.color, a));
+			Render2D.rect(g, cx, y + 26, seg + 0.2f, 1.6f, Theme.alpha(t.color, a));
 			cx += seg;
 		}
-		float ry = y + 36;
+		g.disableScissor();
+		float ry = y + 31;
 		for (int i = 0; i < lines; i++) {
 			Target t = targets.get(i);
-			Render2D.round(g, x + 7, ry + 1.5f, 5, 5, 2, Theme.alpha(t.color, a));
-			Render2D.text(g, Render2D.trim(t.title, 80), x + 16, ry, Theme.alpha(Theme.TEXT, 0.92f * a));
-			Render2D.textRight(g, "x" + d.count(t), x + w - 7, ry, Theme.alpha(t.color, a));
-			ry += 10;
+			Render2D.round(g, x + 6, ry + 0.6f, 3.4f, 3.4f, 1.2f, Theme.alpha(t.color, a));
+			Render2D.text(g, HdFont.MEDIUM, Render2D.trim(HdFont.MEDIUM, t.title, 5.8f, 66), x + 12.5f, ry + 0.3f, 5.8f, Theme.alpha(Theme.TEXT, 0.92f * a));
+			Render2D.textRight(g, HdFont.BOLD, "x" + d.count(t), x + w - 6, ry + 0.3f, 5.8f, Theme.alpha(t.color, a));
+			ry += 8;
 		}
 		if (targets.size() > lines) {
-			Render2D.textRight(g, "+" + (targets.size() - lines) + " more", x + w - 7, ry, Theme.alpha(Theme.MUTED, a));
+			Render2D.textRight(g, HdFont.MEDIUM, "+" + (targets.size() - lines) + " more", x + w - 6, ry + 0.5f, 5.2f, Theme.alpha(Theme.MUTED, a));
 		}
 		g.pose().popMatrix();
 	}
 
+	/** Bottom of the sus-chunk list, so other panels (Auto RTP) can stack below it. */
+	public float listBottom;
+
 	private void drawList(GuiGraphics g) {
 		int sw = g.guiWidth();
 		int rows = Math.min(5, sus.size());
-		int w = 150, rowH = 12;
-		int h = 20 + Math.max(1, rows) * rowH + 4;
-		int x = sw - w - 6;
-		int y = 6 + listOffset();
-		Render2D.shadow(g, x, y, w, h, 0x40000000);
-		Render2D.round(g, x, y, w, h, 6, 0xD80E0B16);
-		Render2D.round(g, x, y + 5, 2, 9, 1, Theme.wave(0.6f));
-		Render2D.text(g, "SUS CHUNKS", x + 7, y + 6, Theme.TEXT);
-		String count = String.valueOf(sus.size());
-		Render2D.round(g, x + w - 12 - Render2D.width(count), y + 4, Render2D.width(count) + 8, 11, 3, Theme.alpha(Theme.accent1(), 0.3f));
-		Render2D.text(g, count, x + w - 8 - Render2D.width(count), y + 6, Theme.TEXT);
-		int ry = y + 20;
+		float w = 122, rowH = 9;
+		float h = 16 + Math.max(1, rows) * rowH + 3;
+		float x = sw - w - 5;
+		float y = ModuleManager.hud.isEnabled() && ModuleManager.hud.moduleList.on() ? ModuleManager.hud.listBottom + 3 : 5;
+		Ui.hud(g, x, y, w, h, 1f);
+		Ui.marker(g, x + 4, y + 4.5f, 6.5f, 1f);
+		Render2D.text(g, HdFont.BOLD, "SUS CHUNKS", x + 8.5f, y + 5.5f, 6f, Theme.TEXT);
+		Ui.badge(g, String.valueOf(sus.size()), x + w - 5 - (HdFont.SEMIBOLD.width(String.valueOf(sus.size()), 5.6f) + 6.2f), y + 3.5f, 5.6f,
+			Theme.alpha(Theme.accent1(), 0.35f), Theme.TEXT);
+		Render2D.rect(g, x + 5, y + 14, w - 10, 0.35f, 0x1F9CC4FF);
+		float ry = y + 17;
+		listBottom = y + h;
 		if (rows == 0) {
-			String scanning = ChunkScanner.queued() > 0 ? "Scanning… " + ChunkScanner.queued() + " left" : "Nothing found yet";
-			Render2D.text(g, scanning, x + 7, ry + 1, Theme.MUTED);
+			String scanning = ChunkScanner.queued() > 0 ? "Scanning\u2026 " + ChunkScanner.queued() + " chunks" : "Nothing found yet";
+			Render2D.text(g, HdFont.MEDIUM, scanning, x + 6, ry + 1, 5.8f, Theme.MUTED);
 			return;
 		}
 		float yaw = mc.player.getYRot();
@@ -409,28 +421,18 @@ public class ChunkFinderModule extends Module {
 			Kind kind = kind(d);
 			double dx = d.centerX() - mc.player.getX(), dz = d.centerZ() - mc.player.getZ();
 			int dist = (int) Math.sqrt(dx * dx + dz * dz);
-			Render2D.circle(g, x + 9, ry + 4.5f, 2.5f, kind.color);
-			Render2D.text(g, (int) d.centerX() + ", " + (int) d.centerZ(), x + 16, ry + 1, Theme.TEXT);
+			Render2D.circle(g, x + 7.5f, ry + 2.6f, 1.7f, kind.color);
+			Render2D.text(g, HdFont.MEDIUM, (int) d.centerX() + ", " + (int) d.centerZ(), x + 12.5f, ry + 0.5f, 5.8f, Theme.TEXT);
 			String right = dist + "m " + arrow(dx, dz, yaw);
-			Render2D.textRight(g, right, x + w - 7, ry + 1, kind.color);
+			Render2D.textRight(g, HdFont.SEMIBOLD, right, x + w - 5, ry + 0.5f, 5.8f, kind.color);
 			ry += rowH;
 		}
-	}
-
-	/** Vertical offset so the list sits below the HUD module list. */
-	private int listOffset() {
-		if (!ModuleManager.hud.isEnabled() || !ModuleManager.hud.moduleList.on()) return 0;
-		float total = 0;
-		for (Module m : ModuleManager.all()) {
-			if (m.toggleable() && m != ModuleManager.hud) total += 15 * m.arrayAnim.peek();
-		}
-		return (int) total + 4;
 	}
 
 	private static String arrow(double dx, double dz, float yaw) {
 		double angle = Math.toDegrees(Math.atan2(-dx, dz)) - yaw;
 		angle = ((angle % 360) + 360 + 22.5) % 360;
-		String[] arrows = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
+		String[] arrows = {"\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"};
 		return arrows[(int) (angle / 45) % 8];
 	}
 }

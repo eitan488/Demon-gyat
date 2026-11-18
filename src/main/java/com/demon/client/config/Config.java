@@ -55,6 +55,9 @@ public final class Config {
 		try {
 			JsonObject root = JsonParser.parseString(Files.readString(f, StandardCharsets.UTF_8)).getAsJsonObject();
 			JsonObject mods = root.has("modules") ? root.getAsJsonObject("modules") : new JsonObject();
+			// 1.0.x configs used the old purple theme by default; the new default style is blue
+			String version = root.has("version") ? root.get("version").getAsString() : "1.0.0";
+			boolean legacy = version.startsWith("1.0");
 			for (Module m : ModuleManager.all()) {
 				if (!mods.has(m.name)) continue;
 				JsonObject o = mods.getAsJsonObject(m.name);
@@ -62,6 +65,7 @@ public final class Config {
 				if (o.has("settings")) {
 					JsonObject s = o.getAsJsonObject("settings");
 					for (Setting<?> setting : m.settings()) {
+						if (legacy && setting.name.equals("Theme")) continue;
 						JsonElement e = s.get(setting.name);
 						if (e != null) {
 							try {
@@ -72,7 +76,7 @@ public final class Config {
 						}
 					}
 				}
-				if (o.has("enabled")) m.loadEnabled(o.get("enabled").getAsBoolean());
+				if (o.has("enabled") && m.persistEnabled()) m.loadEnabled(o.get("enabled").getAsBoolean());
 			}
 		} catch (Exception e) {
 			DemonClient.LOG.error("Failed to load Demon config", e);
@@ -89,7 +93,7 @@ public final class Config {
 		JsonObject mods = new JsonObject();
 		for (Module m : ModuleManager.all()) {
 			JsonObject o = new JsonObject();
-			o.addProperty("enabled", m.isEnabled());
+			o.addProperty("enabled", m.persistEnabled() && m.isEnabled());
 			o.addProperty("key", m.getKey());
 			JsonObject s = new JsonObject();
 			for (Setting<?> setting : m.settings()) s.add(setting.name, setting.toJson());

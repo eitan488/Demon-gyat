@@ -1,17 +1,18 @@
 import json, math, os, sys
 from PIL import Image, ImageDraw
-OUT = os.path.join(sys.argv[1], "assets/demon/textures/gui/sprites")
-N = 64; SS = 8; B = N * SS
+OUT = os.path.join(sys.argv[1], "assets/demon/textures/hd")
+os.makedirs(OUT, exist_ok=True)
+N = 256  # output size
+B = 64 * 16  # icons are designed in a 64-unit space and drawn at 16x before downsampling
 meta = {"gui": {"scaling": {"type": "stretch"}}}
 def canvas():
     img = Image.new("L", (B, B), 0)
     return img, ImageDraw.Draw(img)
-def S(v): return v * SS
+def S(v): return v * 16
 def save(img, name):
     a = img.resize((N, N), Image.LANCZOS)
     out = Image.new("RGBA", (N, N), (255, 255, 255, 0)); out.putalpha(a)
     out.save(os.path.join(OUT, "icon_" + name + ".png"))
-    json.dump(meta, open(os.path.join(OUT, "icon_" + name + ".png.mcmeta"), "w"))
 def ring(d, cx, cy, r, w):
     d.ellipse([S(cx - r), S(cy - r), S(cx + r), S(cy + r)], outline=255, width=S(w))
 def line(d, x1, y1, x2, y2, w):
@@ -102,4 +103,19 @@ for cx, cy in ((22, 22), (38, 18), (46, 32), (20, 38)):
 d.ellipse([S(32), S(38), S(48), S(54)], fill=0)
 d.ellipse([S(34), S(40), S(46), S(52)], outline=255, width=S(4))
 save(img, "palette")
+# search (magnifier)
+img, d = canvas(); ring(d, 27, 27, 17, 6); line(d, 40, 40, 55, 55, 7); save(img, "search")
+# chevrons
+img, d = canvas(); line(d, 24, 14, 42, 32, 7); line(d, 42, 32, 24, 50, 7); save(img, "chevron_right")
+img, d = canvas(); line(d, 14, 24, 32, 42, 7); line(d, 32, 42, 50, 24, 7); save(img, "chevron_down")
+# location pin with orbit (auto rtp)
+img, d = canvas()
+d.ellipse([S(18), S(6), S(46), S(34)], fill=255)
+d.polygon([(S(19.5), S(25)), (S(44.5), S(25)), (S(32), S(46))], fill=255)
+d.ellipse([S(26), S(14), S(38), S(26)], fill=0)
+d.ellipse([S(6), S(44), S(58), S(60)], outline=255, width=S(4))
+save(img, "rtp")
+# timer
+img, d = canvas(); ring(d, 32, 36, 22, 6); line(d, 32, 36, 32, 22, 6); line(d, 26, 6, 38, 6, 6); line(d, 50, 16, 54, 20, 5)
+save(img, "timer")
 print("icons ok")

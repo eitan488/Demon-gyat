@@ -1,5 +1,6 @@
 package com.demon.client.module;
 
+import com.demon.client.module.modules.AutoRtpModule;
 import com.demon.client.module.modules.ChunkFinderModule;
 import com.demon.client.module.modules.EspModule;
 import com.demon.client.module.modules.FreecamModule;
@@ -14,6 +15,7 @@ public final class ModuleManager {
 	private static final List<Module> MODULES = new ArrayList<>();
 
 	public static ChunkFinderModule chunkFinder;
+	public static AutoRtpModule autoRtp;
 	public static EspModule esp;
 	public static FreecamModule freecam;
 	public static HudModule hud;
@@ -21,6 +23,7 @@ public final class ModuleManager {
 
 	public static void init() {
 		MODULES.add(chunkFinder = new ChunkFinderModule());
+		MODULES.add(autoRtp = new AutoRtpModule());
 		MODULES.add(esp = new EspModule());
 		MODULES.add(freecam = new FreecamModule());
 		MODULES.add(hud = new HudModule());

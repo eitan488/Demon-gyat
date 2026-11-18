@@ -37,7 +37,7 @@ public final class MenuFx {
 	/** Full-screen animated background: aurora blobs, stars, synthwave grid and vignette. */
 	public static void background(GuiGraphics g, int w, int h, float alpha) {
 		float t = Anim.time();
-		Render2D.vGradient(g, 0, 0, w, h, Theme.alpha(0xFF07050D, alpha), Theme.alpha(0xFF120B1F, alpha));
+		Render2D.vGradient(g, 0, 0, w, h, Theme.alpha(0xFF02060F, alpha), Theme.alpha(0xFF081530, alpha));
 		int a1 = Theme.accent1(), a2 = Theme.accent2();
 		// aurora
 		Render2D.glow(g, w * (0.22f + 0.08f * (float) Math.sin(t * 0.21)), h * (0.32f + 0.06f * (float) Math.cos(t * 0.17)), w * 0.55f, Theme.alpha(a1, 0.26f * alpha));
@@ -50,7 +50,7 @@ public final class MenuFx {
 			float y = s[1] * h;
 			int c = Theme.alpha(0xFFFFFFFF, tw * 0.75f * alpha);
 			if (s[2] > 1.3f) Render2D.glow(g, x, y, s[2] * 2.6f, Theme.alpha(Theme.lerp(0xFFFFFFFF, a2, 0.4f), tw * 0.5f * alpha));
-			Render2D.rect(g, (int) x, (int) y, 1, 1, c);
+			Render2D.circle(g, x, y, 0.25f + s[2] * 0.22f, c);
 		}
 		grid(g, w, h, alpha);
 		// vignette
@@ -76,7 +76,7 @@ public final class MenuFx {
 			float p = (i + scroll) / lines;
 			float yy = horizon + (h - horizon) * p * p;
 			int col = Theme.alpha(Theme.lerp(a2, a1, p), (0.12f + 0.55f * p) * alpha);
-			Render2D.rect(g, 0, (int) yy, w, 1, col);
+			Render2D.rect(g, 0, yy, w, 0.34f + p * 0.3f, col);
 		}
 		// converging verticals
 		float vx = w / 2f;
